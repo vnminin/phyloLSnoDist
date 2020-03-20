@@ -4,20 +4,23 @@
 # setwd("/homes/peterchi/LeastSquares")
 # source("/homes/peterchi/LeastSquares/new_ls.R")
 # source("/homes/peterchi/Recombination/dss-func.R")
+library(phyloLSnoDist)
 library(robustDist)
 
 
 set.seed(11312)
 
 reps <- 1000
-n.scen <- 5
 scen <- c(1,2,3,4,9)
+n.scen <- length(scen)
+n.tips <- 5
+n.br <- 2*n.tips - 3
 
 reg.errors <- array(NA,c(reps,n.br,n.scen))
 new.errors <- array(NA,c(reps,n.br,n.scen))
 counts <- matrix(NA,nrow=n.scen, ncol=reps)
 
-for(l in 1:length(scen)){
+for(l in scen){
    cat('scenario',l,'\n')
 
    old.err<-as.list(rep(NA,reps))
@@ -25,7 +28,6 @@ for(l in 1:length(scen)){
 
    tree.file<-paste(paste("sim_phylo5-",l,sep=""),".tree",sep="")
    my.tree<-read.tree(here("analysis", "tree_files", tree.file))
-   n.br<-length(unroot(my.tree)$edge.length)
    new.brlen<-matrix(NA,nrow=reps,ncol=n.br)
    reg.brlen<-matrix(NA,nrow=reps,ncol=n.br)
 
