@@ -20,13 +20,13 @@ reg.errors <- array(NA,c(reps,n.br,n.scen))
 new.errors <- array(NA,c(reps,n.br,n.scen))
 counts <- matrix(NA,nrow=n.scen, ncol=reps)
 
-for(l in scen){
+for(l in 1:n.scen){
    cat('scenario',l,'\n')
 
    old.err<-as.list(rep(NA,reps))
    new.err<-as.list(rep(NA,reps))
 
-   tree.file<-paste(paste("sim_phylo5-",l,sep=""),".tree",sep="")
+   tree.file<-paste(paste("sim_phylo5-",scen[l],sep=""),".tree",sep="")
    my.tree<-read.tree(here("analysis", "tree_files", tree.file))
    new.brlen<-matrix(NA,nrow=reps,ncol=n.br)
    reg.brlen<-matrix(NA,nrow=reps,ncol=n.br)
