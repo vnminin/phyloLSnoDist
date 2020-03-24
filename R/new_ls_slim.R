@@ -80,7 +80,7 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix)
 
 
 
-new.ls.fit.optimx <- function(init.brlen, my.topology, seq.table, method="nlminb", low=-100){
+new.ls.fit.optimx <- function(init.brlen, my.topology, seq.table, method="nlminb", low=-100, high=2){
 
   return.val = NULL
   par.num = length(init.brlen)
@@ -95,15 +95,22 @@ new.ls.fit.optimx <- function(init.brlen, my.topology, seq.table, method="nlminb
       log(init.brlen),
       new.ls.loss,
       lower = rep(low,par.num),	# this should constrain br len to be min of 4.5e-5 (-100 gives 3.72e-44)
-      upper = rep(0,par.num),		# this should constrain br len to be max of 1
+      upper = rep(high,par.num),		# this should constrain br len to be max of e^2 ~ 7.389
       method = method,
       my.topology = my.topology,
       seq.table = seq.table,
       regist.matrix = regist.mat
     )
+
+    # Keep track of iterations
     count<-count+1
+
+    # If convergence was not reached, re-initialize starting values to random values
     init.brlen<-runif(par.num,0,0.5)
   }
+
+
+# 3/24/20 keeping this out for now as it doesn't seem necessary...
 
 #  if(!any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
 #    optim.out$conv<-6		# so, 6 means that it hit the lower boundary

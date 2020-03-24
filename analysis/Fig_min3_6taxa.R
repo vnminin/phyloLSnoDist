@@ -31,6 +31,8 @@ for(l in 1:n.scen){
    new.brlen<-matrix(NA,nrow=reps,ncol=n.br)
    reg.brlen<-matrix(NA,nrow=reps,ncol=n.br)
 
+   true<-unroot(my.tree)$edge.length
+
    for(i in 1:reps){
      my.align <- as.character(simSeq(my.tree, 1000))
 
@@ -49,11 +51,11 @@ for(l in 1:n.scen){
      optim.out <- new.ls.fit.optimx(rep(0.1, n.br), unroot(my.tree), my.align)
      new.brlen[i,] <- optim.out$par.est
      counts[l,i] <- optim.out$count
-   }
 
-   true<-unroot(my.tree)$edge.length
-   reg.errors[, , l] <- (reg.brlen - true)/sqrt(true)
-   new.errors[, , l] <- (new.brlen - true)/sqrt(true)
+     reg.errors[i , , l] <- (reg.brlen[i, ] - true)/sqrt(true)
+     new.errors[i , , l] <- (new.brlen[i, ] - true)/sqrt(true)
+
+   }
 
 }
 
