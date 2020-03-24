@@ -8,9 +8,12 @@ library(robustDist)
 min.errors5<-matrix(NA,nrow=reps,ncol=30)
 
 load(here("analysis","Fig_min3_5taxa.RData"))
-true<-unroot(my.tree)$edge.length
-min3<-order(unroot(my.tree)$edge.length)[1:3]
 for(l in 1:n.scen){
+  tree.file<-paste(paste("sim_phylo5-",scen[l],sep=""),".tree",sep="")
+  my.tree<-read.tree(here("analysis", "tree_files", tree.file))
+  true<-unroot(my.tree)$edge.length
+  min3<-order(unroot(my.tree)$edge.length)[1:3]
+
   for(k in 1:reps){
     min.errors5[k,((6*(l-1)) + c(1,3,5))]<-reg.errors[k, min3, l]
     min.errors5[k,((6*(l-1)) + c(2,4,6))]<-new.errors[k, min3, l]
@@ -22,9 +25,12 @@ for(l in 1:n.scen){
 min.errors6<-matrix(NA,nrow=reps,ncol=30)
 
 load(here("analysis","Fig_min3_6taxa.RData"))
-true<-unroot(my.tree)$edge.length
-min3<-order(unroot(my.tree)$edge.length)[1:3]
 for(l in 1:n.scen){
+  tree.file<-paste(paste("sim_phylo6-",scen[l],sep=""),".tree",sep="")
+  my.tree<-read.tree(here("analysis", "tree_files", tree.file))
+  true<-unroot(my.tree)$edge.length
+  min3<-order(unroot(my.tree)$edge.length)[1:3]
+
   for(k in 1:reps){
     min.errors6[k,((6*(l-1)) + c(1,3,5))]<-reg.errors[k, min3, l]
     min.errors6[k,((6*(l-1)) + c(2,4,6))]<-new.errors[k, min3, l]
@@ -37,9 +43,12 @@ for(l in 1:n.scen){
 min.errors7<-matrix(NA,nrow=reps,ncol=30)
 
 load(here("analysis","Fig_min3_7taxa.RData"))
-true<-unroot(my.tree)$edge.length
-min3<-order(unroot(my.tree)$edge.length)[1:3]
 for(l in 1:n.scen){
+  tree.file<-paste(paste("sim_phylo7-",scen[l],sep=""),".tree",sep="")
+  my.tree<-read.tree(here("analysis", "tree_files", tree.file))
+  true<-unroot(my.tree)$edge.length
+  min3<-order(unroot(my.tree)$edge.length)[1:3]
+
   for(k in 1:reps){
     min.errors7[k,((6*(l-1)) + c(1,3,5))]<-reg.errors[k, min3, l]
     min.errors7[k,((6*(l-1)) + c(2,4,6))]<-new.errors[k, min3, l]
