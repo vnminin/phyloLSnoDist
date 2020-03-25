@@ -5,9 +5,9 @@ library(robustDist)
 # 1 row for each of 5, 6, 7 taxa
 #
 
-min.errors5<-matrix(NA,nrow=reps,ncol=30)
 
 load(here("analysis","Fig_min3_5taxa.RData"))
+min.errors5<-matrix(NA,nrow=reps,ncol=30)
 for(l in 1:n.scen){
   tree.file<-paste(paste("sim_phylo5-",scen[l],sep=""),".tree",sep="")
   my.tree<-read.tree(here("analysis", "tree_files", tree.file))
@@ -22,9 +22,9 @@ for(l in 1:n.scen){
 
 
 
-min.errors6<-matrix(NA,nrow=reps,ncol=30)
 
 load(here("analysis","Fig_min3_6taxa.RData"))
+min.errors6<-matrix(NA,nrow=reps,ncol=30)
 for(l in 1:n.scen){
   tree.file<-paste(paste("sim_phylo6-",scen[l],sep=""),".tree",sep="")
   my.tree<-read.tree(here("analysis", "tree_files", tree.file))
@@ -40,9 +40,9 @@ for(l in 1:n.scen){
 
 
 
-min.errors7<-matrix(NA,nrow=reps,ncol=30)
 
 load(here("analysis","Fig_min3_7taxa.RData"))
+min.errors7<-matrix(NA,nrow=reps,ncol=30)
 for(l in 1:n.scen){
   tree.file<-paste(paste("sim_phylo7-",scen[l],sep=""),".tree",sep="")
   my.tree<-read.tree(here("analysis", "tree_files", tree.file))
