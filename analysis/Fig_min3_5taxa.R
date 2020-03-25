@@ -10,7 +10,7 @@ library(robustDist)
 
 set.seed(11312)
 
-reps <- 2
+reps <- 1000
 scen <- c(1,2,3,4,9)
 n.scen <- length(scen)
 n.tips <- 5
