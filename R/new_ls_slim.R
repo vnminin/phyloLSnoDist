@@ -152,31 +152,88 @@ read.phylosim.nuc<-function(alignment){
 
 
 
-
-optim.phylo.ls.all <-
-  function (D,
-            set.neg.to.zero = TRUE,
-            fixed = FALSE,
-            tol = 1e-10,
-            collapse = TRUE) {
-    if (class(D) == "dist")
+phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10, collapse = TRUE){
+    if(class(D) == "dist"){
       D <- as.matrix(D)
+    }
     n <- nrow(D)
 
+  if(search.all){
+    # Do search through all possible topologies
     all.trees <- allTrees(n, tip.label = row.names(as.matrix(D)))
     allQ <- vector()
     bestQ <- Inf
+
+    # Benchmarked for loop speed against lapply up to n.tips=8, basically the same either way.
     for (i in 1:length(all.trees)) {
       all.trees[[i]]$edge.length <- rep(dim(all.trees[[i]]$edge)[1], 1)
-      all.trees[[i]] <-
-        nnls.tree(D, all.trees[[i]], trace = 0)	# this used to be ls.tree
-      allQ[i] <- attr(all.trees[[i]], "RSS")
+      all.trees[[i]] <- ls.tree(D, all.trees[[i]])	# this used to be ls.tree. 3/30/20 back to ls.tree because nnls.tree produces ties
+      allQ[i] <- attr(all.trees[[i]], "Q-score")
     }
     best <- which(allQ == min(allQ))
-#    if (length(best) > 1) { # temporary fix?
-#      best <- best[1]			# if trees tie, just pick the first one
-#    }                # I don't really think this is a good idea...
-    return(all.trees[[best]])
+    #    if (length(best) > 1) { # temporary fix?
+    #      best <- best[1]			# if trees tie, just pick the first one
+    #    }                # I don't really think this is a good idea...
+
+    best.tree <- all.trees[[best]]
+
+  } else {
+    # Do nni search
+    tree <- rtree(n=n, tip.label=rownames(D),br=NULL, rooted=F)
+    best.tree <- ls.tree(tree = tree, D = D)
+
+    Q <- Inf
+    bestQ <- 0
+    while((Q - bestQ) > tol){
+      Q <- attr(best.tree, "Q-score")
+
+      nni.trees <- lapply(nni(best.tree), ls.tree, D=D)
+      nniQ <- sapply(nni.trees, function(x) attr(x, "Q-score"))
+      best <- which(nniQ == min(nniQ))
+      bestQ <- nniQ[best]
+
+      # 3/27/20 figure out what to do about bestQ having multiple values
+      if(bestQ > Q){
+        bestQ <- Q
+      } else {
+        best.tree <- nni.trees[[best]]
+      }
+    }
   }
+  return(best.tree)
+}
+
+
+# 3/26/20 this isn't done yet
+new.phylo.ls <- function(initvals = NULL, seq.table, method="nlminb", low=-100, high=2){
+  n <- nrow(seq.table)
+  all.trees <- allTrees(n,tip.label=row.names(seq.table))
+  allQ <- vector()
+
+  if(is.null(initvals)){
+    initvals <- rep(0.1, nrow(all.trees[[1]]$edge))
+  }
+
+#  bestQ <- Inf
+
+  for (i in 1:length(all.trees)) {
+    output <- new.ls.fit.optimx(initvals,all.trees[[i]],seq.table,method,low) # 3/26/20 check this
+    all.trees[[i]]$edge.length <- output$par.est
+    all.trees[[i]]$ls <- output$ls
+    #      if(output$conv!=0){
+    #         return(output)
+    #      }
+    if(output$conv==7 | output$conv==8){
+      cat('Warning: upper bound reached on at least one potential tree','\n')
+    }
+    all.trees[[i]]$convergence <- output$conv
+    allQ[i] <- output$ls
+  }
+  best<-which(allQ==min(allQ))
+#  if(length(best)>1){			# temporary fix?
+#    best<-best[1]			# if trees tie, just pick the first one
+#  }
+  return(all.trees[[best]])
+}
 
 
