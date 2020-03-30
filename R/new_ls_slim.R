@@ -152,7 +152,7 @@ read.phylosim.nuc<-function(alignment){
 
 
 
-phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10, collapse = TRUE){
+phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10){
     if(class(D) == "dist"){
       D <- as.matrix(D)
     }
@@ -199,6 +199,9 @@ phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10,
         best.tree <- nni.trees[[best]]
       }
     }
+  }
+  if(set.neg.to.zero){
+    best.tree$edge.length <- ifelse(best.tree$edge.length>0, best.tree$edge.length, 0)
   }
   return(best.tree)
 }
