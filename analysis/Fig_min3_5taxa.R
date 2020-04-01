@@ -49,7 +49,7 @@ for(l in 1:n.scen){
 
 
      my.align <- read.phylosim.nuc(my.align)
-     optim.out <- new.ls.fit.optimx(rep(0.1, n.br), unroot(my.tree), my.align)
+     optim.out <- new.ls.fit.optimx(unroot(my.tree), my.align) # arguments redone 4/1/20 but haven't re-run to test
      new.brlen[i,] <- optim.out$par.est
      counts[l,i] <- optim.out$count
 

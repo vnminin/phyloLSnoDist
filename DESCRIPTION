@@ -13,4 +13,5 @@ Depends:
         phangorn,
         phytools,
         optimx,
-        here
+        here,
+        robustDist

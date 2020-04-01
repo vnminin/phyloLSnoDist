@@ -79,8 +79,17 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix)
 }
 
 
+# order of arguments changed 4/1/20, might have implications on old code...
+new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method="nlminb", low=-100, high=2){
 
-new.ls.fit.optimx <- function(init.brlen, my.topology, seq.table, method="nlminb", low=-100, high=2){
+  if(is.null(init.brlen)){
+    init.brlen <- rep(0.1, (2*n - 3))
+  }
+
+  # change A,C,T,G to numeric if needed
+  if(typeof(seq.table) == "character"){
+    seq.table <- read.phylosim.nuc(seq.table)
+  }
 
   return.val = NULL
   par.num = length(init.brlen)
@@ -151,7 +160,7 @@ read.phylosim.nuc<-function(alignment){
 }
 
 
-
+# This function took elements from Liam Revell's optim.phylo.ls
 phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10){
     if(class(D) == "dist"){
       D <- as.matrix(D)
@@ -164,17 +173,13 @@ phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10)
     allQ <- vector()
     bestQ <- Inf
 
-    # Benchmarked for loop speed against lapply up to n.tips=8, basically the same either way.
+    # Benchmarked [for loop] speed against [lapply] up to n.tips=8, basically the same either way (as I should've known).
     for (i in 1:length(all.trees)) {
       all.trees[[i]]$edge.length <- rep(dim(all.trees[[i]]$edge)[1], 1)
       all.trees[[i]] <- ls.tree(D, all.trees[[i]])	# this used to be ls.tree. 3/30/20 back to ls.tree because nnls.tree produces ties
       allQ[i] <- attr(all.trees[[i]], "Q-score")
     }
     best <- which(allQ == min(allQ))
-    #    if (length(best) > 1) { # temporary fix?
-    #      best <- best[1]			# if trees tie, just pick the first one
-    #    }                # I don't really think this is a good idea...
-
     best.tree <- all.trees[[best]]
 
   } else {
@@ -192,7 +197,6 @@ phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10)
       best <- which(nniQ == min(nniQ))
       bestQ <- nniQ[best]
 
-      # 3/27/20 figure out what to do about bestQ having multiple values
       if(bestQ > Q){
         bestQ <- Q
       } else {
@@ -208,35 +212,42 @@ phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10)
 
 
 # 3/26/20 this isn't done yet
-new.phylo.ls <- function(initvals = NULL, seq.table, method="nlminb", low=-100, high=2){
+new.phylo.ls <- function(initvals = NULL, seq.table, search.all = FALSE, method="nlminb", low=-100, high=2){
   n <- nrow(seq.table)
-  all.trees <- allTrees(n,tip.label=row.names(seq.table))
-  allQ <- vector()
 
-  if(is.null(initvals)){
-    initvals <- rep(0.1, nrow(all.trees[[1]]$edge))
-  }
+  if(search.all){
+    all.trees <- allTrees(n,tip.label=row.names(seq.table))
+    allQ <- vector()
+tic()
+    for (i in 1:length(all.trees)) {
+      output <- new.ls.fit.optimx(initvals, all.trees[[i]], seq.table, method, low, high) # 3/30/20 check this
+      all.trees[[i]]$edge.length <- output$par.est
+      all.trees[[i]]$ls <- output$ls
 
-#  bestQ <- Inf
-
-  for (i in 1:length(all.trees)) {
-    output <- new.ls.fit.optimx(initvals,all.trees[[i]],seq.table,method,low) # 3/26/20 check this
-    all.trees[[i]]$edge.length <- output$par.est
-    all.trees[[i]]$ls <- output$ls
-    #      if(output$conv!=0){
-    #         return(output)
-    #      }
-    if(output$conv==7 | output$conv==8){
-      cat('Warning: upper bound reached on at least one potential tree','\n')
+      if(output$conv!=0){
+        cat('Warning: convergence not reached on at least one potential tree','\n')
+      }
+      all.trees[[i]]$convergence <- output$conv
+      allQ[i] <- output$ls
     }
-    all.trees[[i]]$convergence <- output$conv
-    allQ[i] <- output$ls
+toc()
+
+    best<-which(allQ==min(allQ))
+    best.tree <- all.trees[[best]]
+  } else {
+
+
   }
-  best<-which(allQ==min(allQ))
-#  if(length(best)>1){			# temporary fix?
-#    best<-best[1]			# if trees tie, just pick the first one
-#  }
-  return(all.trees[[best]])
+
+  return(best.tree)
 }
 
 
+# optim.out <- new.ls.fit.optimx(rep(0.1, n.br), unroot(my.tree), my.align)
+# new.brlen[i,] <- optim.out$par.est
+# counts[l,i] <- optim.out$count
+
+# I don't know why this is --- OK APPARENTLY BECAUSE I FORGOT TO LOAD THE ROBUSTDIST PACKAGE
+# 3/31/20 ADDED IT TO DESCRIPTION FILE, NEED TO MAKE A NOTE SOMEWHERE ABOUT INSTALLING IT
+# Error in optimx.check(par, optcfg$ufn, optcfg$ugr, optcfg$uhess, lower,  :
+#                        Cannot evaluate function at initial parameters
