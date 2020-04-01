@@ -161,6 +161,8 @@ read.phylosim.nuc<-function(alignment){
 
 
 # This function took elements from Liam Revell's optim.phylo.ls
+# 4/1/20 something seems wrong with exhaustive search, need to fix.
+# Also I want to change this to take the alignment as its input.
 phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10){
     if(class(D) == "dist"){
       D <- as.matrix(D)
@@ -212,13 +214,14 @@ phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10)
 
 
 # 3/26/20 this isn't done yet
-new.phylo.ls <- function(initvals = NULL, seq.table, search.all = FALSE, method="nlminb", low=-100, high=2){
+new.phylo.ls <- function(seq.table, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=2, tol = 1e-10){
   n <- nrow(seq.table)
 
   if(search.all){
     all.trees <- allTrees(n,tip.label=row.names(seq.table))
     allQ <- vector()
-tic()
+
+    # for loop is same speed as using lapply. Not sure if I can speed this up at all.
     for (i in 1:length(all.trees)) {
       output <- new.ls.fit.optimx(initvals, all.trees[[i]], seq.table, method, low, high) # 3/30/20 check this
       all.trees[[i]]$edge.length <- output$par.est
@@ -230,12 +233,36 @@ tic()
       all.trees[[i]]$convergence <- output$conv
       allQ[i] <- output$ls
     }
-toc()
 
     best<-which(allQ==min(allQ))
     best.tree <- all.trees[[best]]
-  } else {
 
+  } else {
+    # Do nni search
+    best.tree <- rtree(n=n, tip.label=rownames(seq.table),br=NULL, rooted=F)  # Just to get things started
+    output <- new.ls.fit.optimx(my.topology = tree, seq.table = seq.table)
+    best.tree$edge.length <- output$par.est
+    best.tree$ls <- output$ls
+
+    Q <- Inf
+    bestQ <- 0
+    while((Q - bestQ) > tol){
+      Q <- best.tree$ls
+
+      nni.trees <- nni(best.tree)  # not sure if the ordering of nni output is deterministic, so store it first
+      nni.output <- lapply(nni.trees, new.ls.fit.optimx, seq.table = seq.table)
+      nniQ <- sapply(nni.output, `[[`, "ls")
+      best <- which(nniQ == min(nniQ))
+      bestQ <- nniQ[best]
+
+      if(bestQ > Q){
+        bestQ <- Q
+      } else {
+        best.tree <- nni.trees[[best]]
+        best.tree$edge.length <- nni.output[[best]]$par.est
+        best.tree$ls <- nni.output[[best]]$ls
+      }
+    }
 
   }
 
