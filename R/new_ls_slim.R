@@ -326,21 +326,17 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
 #' phylo.ML(seq.table)
 phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
 
+  n <- length(alignment)
+
   if(search.all){
-    all.trees <- allTrees(n,tip.label=row.names(seq.table))
+    all.trees <- allTrees(n, tip.label=names(alignment))
     allQ <- vector()
 
-    # for loop is same speed as using lapply. Not sure if I can speed this up at all.
+    # 4/2/20 5PM TEST THIS, HASN'T BEEN RUN AT ALL YET
     for (i in 1:length(all.trees)) {
-      output <- new.ls.fit.optimx(all.trees[[i]], seq.table, initvals, method, low, high) # 3/30/20 check this
-      all.trees[[i]]$edge.length <- output$par.est
-      all.trees[[i]]$ls <- output$ls
-
-      if(output$conv!=0){
-        cat('Warning: convergence not reached on at least one potential tree','\n')
-      }
-      all.trees[[i]]$convergence <- output$conv
-      allQ[i] <- output$ls
+      output <- optim.pml(pml(all.trees[[i]], alignment))
+      all.trees[[i]] <- output$tree
+      allQ[i] <- output$logLik
     }
 
     best<-which(allQ==min(allQ))
