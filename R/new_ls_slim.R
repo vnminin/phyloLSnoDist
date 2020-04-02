@@ -176,8 +176,6 @@ read.phylosim.nuc<-function(alignment){
 #' @export
 #' @examples
 #' phylo.ls(seq.table)
-
-
 phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, model="JC69", tol = 1e-10){
   seq.table <- as.character(alignment)
   data.bin<-as.DNAbin(as.alignment(seq.table))
@@ -313,4 +311,72 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
 }
 
 
+#' Maximum likelihood phylogenetic inference
+#'
+#' This is basically a wrapper function around the pml function from the phangorn package, made to suit our purposes here.
+#'
+#' @param alignment a nucleotide sequence alignment, of class phyDat
+#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
+#' @return An unrooted phylogeny
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' phylo.ML(seq.table)
+phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
 
+  if(search.all){
+    all.trees <- allTrees(n,tip.label=row.names(seq.table))
+    allQ <- vector()
+
+    # for loop is same speed as using lapply. Not sure if I can speed this up at all.
+    for (i in 1:length(all.trees)) {
+      output <- new.ls.fit.optimx(all.trees[[i]], seq.table, initvals, method, low, high) # 3/30/20 check this
+      all.trees[[i]]$edge.length <- output$par.est
+      all.trees[[i]]$ls <- output$ls
+
+      if(output$conv!=0){
+        cat('Warning: convergence not reached on at least one potential tree','\n')
+      }
+      all.trees[[i]]$convergence <- output$conv
+      allQ[i] <- output$ls
+    }
+
+    best<-which(allQ==min(allQ))
+    best.tree <- all.trees[[best]]
+
+  } else {
+    # Do nni search
+
+    # Start from NJ tree using distance matrix according to JC69
+    data.bin<-as.DNAbin(as.alignment(seq.table))
+    D <- as.matrix(dist.dna(data.bin,model="JC69"))
+    best.tree <- nj(D)
+
+    output <- new.ls.fit.optimx(my.topology = best.tree, seq.table = seq.table)
+    best.tree$edge.length <- output$par.est
+    best.tree$ls <- output$ls
+
+    Q <- Inf
+    bestQ <- 0
+    while((Q - bestQ) > tol){
+      Q <- best.tree$ls
+
+      nni.trees <- nni(best.tree)  # not sure if the ordering of nni output is deterministic, so store it first
+      nni.output <- lapply(nni.trees, new.ls.fit.optimx, seq.table = seq.table)
+      nniQ <- sapply(nni.output, `[[`, "ls")
+      best <- which(nniQ == min(nniQ))
+      bestQ <- nniQ[best]
+
+      if(bestQ > Q){
+        bestQ <- Q
+      } else {
+        best.tree <- nni.trees[[best]]
+        best.tree$edge.length <- nni.output[[best]]$par.est
+        best.tree$ls <- nni.output[[best]]$ls
+      }
+    }
+  }
+  return(best.tree)
+}
