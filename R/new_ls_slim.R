@@ -160,15 +160,11 @@ read.phylosim.nuc<-function(alignment){
 }
 
 
-# This function took elements from Liam Revell's optim.phylo.ls
-# 4/1/20 something seems wrong with exhaustive search, need to fix.
-# Also I want to change this to take the alignment as its input.
-
 #' A phyloLSnoDist Function
 #'
 #' This function performs phylogenetic inference via ordinary least squares. It was written taking elements
 #' from Liam Revell's optim.phylo.ls. The main difference is that it allows for an exhaustive search among
-#' all possible topologies (if not, it will do an NNI search). This function infers an unrooted tree.
+#' all possible topologies (if not, it will do an NNI search, starting from the NJ tree). This function infers an unrooted tree.
 #'
 #' @param seq.table a nucleotide sequence alignment, formatted as an n x s character matrix where n = # of taxa, s = # of sites
 #' @param set.neg.to.zero if TRUE, negative branch lengths will be converted to 0
@@ -208,8 +204,8 @@ phylo.ls <- function(seq.table, set.neg.to.zero = TRUE, search.all = FALSE, mode
     best.tree <- all.trees[[best]]
 
   } else {
-    # Do nni search
-    tree <- rtree(n=n, tip.label=rownames(D),br=NULL, rooted=F)
+    # Do nni search, starting from NJ tree
+    tree <- nj(D)
     best.tree <- ls.tree(tree = tree, D = D)
 
     Q <- Inf
@@ -236,7 +232,26 @@ phylo.ls <- function(seq.table, set.neg.to.zero = TRUE, search.all = FALSE, mode
 }
 
 
-# 4/1/20 It runs but needs more testing to make sure. Specifically check search.all=TRUE
+
+
+#' A phyloLSnoDist Function
+#'
+#' This function performs phylogenetic inference via least squares with our new loss. It allows for an exhaustive search among
+#' all possible topologies (if not, it will do an NNI search, starting from the NJ tree). This function infers an unrooted tree.
+#'
+#' @param seq.table a nucleotide sequence alignment, formatted as an n x s character matrix where n = # of taxa, s = # of sites
+#' @param initvals starting values for each branch
+#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param method optimization method for optimx function
+#' @param low lower bound for numeric optimization
+#' @param high upper bound for numeric optimization
+#' @param tol in NNI search, keep searching if improvement is at least this amount
+#' @return An unrooted phylogeny
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' new.phylo.ls(seq.table)
 new.phylo.ls <- function(seq.table, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=2, tol = 1e-10){
   n <- nrow(seq.table)
 
@@ -262,7 +277,12 @@ new.phylo.ls <- function(seq.table, initvals = NULL, search.all = FALSE, method=
 
   } else {
     # Do nni search
-    best.tree <- rtree(n=n, tip.label=rownames(seq.table),br=NULL, rooted=F)  # Just to get things started
+
+    # Start from NJ tree using distance matrix according to JC69
+    data.bin<-as.DNAbin(as.alignment(seq.table))
+    D <- as.matrix(dist.dna(data.bin,model="JC69"))
+    best.tree <- nj(D)
+
     output <- new.ls.fit.optimx(my.topology = best.tree, seq.table = seq.table)
     best.tree$edge.length <- output$par.est
     best.tree$ls <- output$ls
@@ -286,11 +306,12 @@ new.phylo.ls <- function(seq.table, initvals = NULL, search.all = FALSE, method=
         best.tree$ls <- nni.output[[best]]$ls
       }
     }
-
   }
-
   return(best.tree)
 }
+
+
+
 
 
 # optim.out <- new.ls.fit.optimx(rep(0.1, n.br), unroot(my.tree), my.align)
