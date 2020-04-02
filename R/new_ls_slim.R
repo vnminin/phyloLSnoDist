@@ -83,7 +83,7 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix)
 new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method="nlminb", low=-100, high=2){
 
   if(is.null(init.brlen)){
-    init.brlen <- rep(0.1, (2*n - 3))
+    init.brlen <- rep(0.1, dim(my.topology$edge)[1])
   }
 
   # change A,C,T,G to numeric if needed
@@ -168,7 +168,7 @@ read.phylosim.nuc<-function(alignment){
 #'
 #' This function performs phylogenetic inference via ordinary least squares. It was written taking elements
 #' from Liam Revell's optim.phylo.ls. The main difference is that it allows for an exhaustive search among
-#' all possible topologies (if not, it will do an NNI search).
+#' all possible topologies (if not, it will do an NNI search). This function infers an unrooted tree.
 #'
 #' @param seq.table a nucleotide sequence alignment, formatted as an n x s character matrix where n = # of taxa, s = # of sites
 #' @param set.neg.to.zero if TRUE, negative branch lengths will be converted to 0
@@ -246,7 +246,7 @@ new.phylo.ls <- function(seq.table, initvals = NULL, search.all = FALSE, method=
 
     # for loop is same speed as using lapply. Not sure if I can speed this up at all.
     for (i in 1:length(all.trees)) {
-      output <- new.ls.fit.optimx(initvals, all.trees[[i]], seq.table, method, low, high) # 3/30/20 check this
+      output <- new.ls.fit.optimx(all.trees[[i]], seq.table, initvals, method, low, high) # 3/30/20 check this
       all.trees[[i]]$edge.length <- output$par.est
       all.trees[[i]]$ls <- output$ls
 
@@ -263,7 +263,7 @@ new.phylo.ls <- function(seq.table, initvals = NULL, search.all = FALSE, method=
   } else {
     # Do nni search
     best.tree <- rtree(n=n, tip.label=rownames(seq.table),br=NULL, rooted=F)  # Just to get things started
-    output <- new.ls.fit.optimx(my.topology = tree, seq.table = seq.table)
+    output <- new.ls.fit.optimx(my.topology = best.tree, seq.table = seq.table)
     best.tree$edge.length <- output$par.est
     best.tree$ls <- output$ls
 
