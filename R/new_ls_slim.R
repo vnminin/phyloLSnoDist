@@ -160,7 +160,7 @@ read.phylosim.nuc<-function(alignment){
 }
 
 
-#' A phyloLSnoDist Function
+#' Least squares phylogenetic inference
 #'
 #' This function performs phylogenetic inference via ordinary least squares. It was written taking elements
 #' from Liam Revell's optim.phylo.ls. The main difference is that it allows for an exhaustive search among
@@ -178,7 +178,8 @@ read.phylosim.nuc<-function(alignment){
 #' phylo.ls(seq.table)
 
 
-phylo.ls <- function(seq.table, set.neg.to.zero = TRUE, search.all = FALSE, model="JC69", tol = 1e-10){
+phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, model="JC69", tol = 1e-10){
+  seq.table <- as.character(alignment)
   data.bin<-as.DNAbin(as.alignment(seq.table))
   D <- as.matrix(dist.dna(data.bin,model=model))
   n <- nrow(D)
@@ -234,12 +235,12 @@ phylo.ls <- function(seq.table, set.neg.to.zero = TRUE, search.all = FALSE, mode
 
 
 
-#' A phyloLSnoDist Function
+#' Least squares phylogenetic inference without distances
 #'
-#' This function performs phylogenetic inference via least squares with our new loss. It allows for an exhaustive search among
+#' This function performs phylogenetic inference via least squares with our new loss function. It allows for an exhaustive search among
 #' all possible topologies (if not, it will do an NNI search, starting from the NJ tree). This function infers an unrooted tree.
 #'
-#' @param seq.table a nucleotide sequence alignment, formatted as an n x s character matrix where n = # of taxa, s = # of sites
+#' @param alignment a nucleotide sequence alignment, of class phyDat
 #' @param initvals starting values for each branch
 #' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
 #' @param method optimization method for optimx function
@@ -251,8 +252,9 @@ phylo.ls <- function(seq.table, set.neg.to.zero = TRUE, search.all = FALSE, mode
 #' @keywords phylogeny, OLS
 #' @export
 #' @examples
-#' new.phylo.ls(seq.table)
-new.phylo.ls <- function(seq.table, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=2, tol = 1e-10){
+#' phylo.ls.nodist(seq.table)
+phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=2, tol = 1e-10){
+  seq.table <- as.character(alignment)
   n <- nrow(seq.table)
 
   if(search.all){
@@ -312,13 +314,3 @@ new.phylo.ls <- function(seq.table, initvals = NULL, search.all = FALSE, method=
 
 
 
-
-
-# optim.out <- new.ls.fit.optimx(rep(0.1, n.br), unroot(my.tree), my.align)
-# new.brlen[i,] <- optim.out$par.est
-# counts[l,i] <- optim.out$count
-
-# I don't know why this is --- OK APPARENTLY BECAUSE I FORGOT TO LOAD THE ROBUSTDIST PACKAGE
-# 3/31/20 ADDED IT TO DESCRIPTION FILE, NEED TO MAKE A NOTE SOMEWHERE ABOUT INSTALLING IT
-# Error in optimx.check(par, optcfg$ufn, optcfg$ugr, optcfg$uhess, lower,  :
-#                        Cannot evaluate function at initial parameters

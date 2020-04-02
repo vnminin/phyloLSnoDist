@@ -2,10 +2,10 @@
 % Please edit documentation in R/new_ls_slim.R
 \name{phylo.ls}
 \alias{phylo.ls}
-\title{A phyloLSnoDist Function}
+\title{Least squares phylogenetic inference}
 \usage{
 phylo.ls(
-  seq.table,
+  alignment,
   set.neg.to.zero = TRUE,
   search.all = FALSE,
   model = "JC69",
@@ -13,8 +13,6 @@ phylo.ls(
 )
 }
 \arguments{
-\item{seq.table}{a nucleotide sequence alignment, formatted as an n x s character matrix where n = # of taxa, s = # of sites}
-
 \item{set.neg.to.zero}{if TRUE, negative branch lengths will be converted to 0}
 
 \item{search.all}{if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.}
@@ -22,6 +20,8 @@ phylo.ls(
 \item{model}{substitution model for which to calculate the distance matrix}
 
 \item{tol}{in NNI search, keep searching if improvement is at least this amount}
+
+\item{seq.table}{a nucleotide sequence alignment, formatted as an n x s character matrix where n = # of taxa, s = # of sites}
 }
 \description{
 This function performs phylogenetic inference via ordinary least squares. It was written taking elements
