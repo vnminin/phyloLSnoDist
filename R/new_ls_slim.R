@@ -163,22 +163,45 @@ read.phylosim.nuc<-function(alignment){
 # This function took elements from Liam Revell's optim.phylo.ls
 # 4/1/20 something seems wrong with exhaustive search, need to fix.
 # Also I want to change this to take the alignment as its input.
-phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10){
-    if(class(D) == "dist"){
-      D <- as.matrix(D)
-    }
-    n <- nrow(D)
+
+#' A phyloLSnoDist Function
+#'
+#' This function performs phylogenetic inference via ordinary least squares. It was written taking elements
+#' from Liam Revell's optim.phylo.ls. The main difference is that it allows for an exhaustive search among
+#' all possible topologies (if not, it will do an NNI search).
+#'
+#' @param seq.table a nucleotide sequence alignment, formatted as an n x s character matrix where n = # of taxa, s = # of sites
+#' @param set.neg.to.zero if TRUE, negative branch lengths will be converted to 0
+#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param model substitution model for which to calculate the distance matrix
+#' @param tol in NNI search, keep searching if improvement is at least this amount
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' phylo.ls(seq.table)
+
+
+phylo.ls <- function(seq.table, set.neg.to.zero = TRUE, search.all = FALSE, model="JC69", tol = 1e-10){
+  data.bin<-as.DNAbin(as.alignment(seq.table))
+  D <- as.matrix(dist.dna(data.bin,model=model))
+  n <- nrow(D)
+
+#    if(class(D) == "dist"){
+#      D <- as.matrix(D)
+#    }
+#    n <- nrow(D)
 
   if(search.all){
     # Do search through all possible topologies
-    all.trees <- allTrees(n, tip.label = row.names(as.matrix(D)))
+    all.trees <- allTrees(n, tip.label = row.names(as.matrix(D))) # change this (as.matrix(D) is redundant)
     allQ <- vector()
     bestQ <- Inf
 
     # Benchmarked [for loop] speed against [lapply] up to n.tips=8, basically the same either way (as I should've known).
     for (i in 1:length(all.trees)) {
       all.trees[[i]]$edge.length <- rep(dim(all.trees[[i]]$edge)[1], 1)
-      all.trees[[i]] <- ls.tree(D, all.trees[[i]])	# this used to be ls.tree. 3/30/20 back to ls.tree because nnls.tree produces ties
+      all.trees[[i]] <- ls.tree(tree=all.trees[[i]], D=D)	# this used to be ls.tree. 3/30/20 back to ls.tree because nnls.tree produces ties
       allQ[i] <- attr(all.trees[[i]], "Q-score")
     }
     best <- which(allQ == min(allQ))
@@ -213,7 +236,7 @@ phylo.ls <- function(D, set.neg.to.zero = TRUE, search.all = FALSE, tol = 1e-10)
 }
 
 
-# 3/26/20 this isn't done yet
+# 4/1/20 It runs but needs more testing to make sure. Specifically check search.all=TRUE
 new.phylo.ls <- function(seq.table, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=2, tol = 1e-10){
   n <- nrow(seq.table)
 
