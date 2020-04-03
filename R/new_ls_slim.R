@@ -315,7 +315,7 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
 
 #' Maximum likelihood phylogenetic inference
 #'
-#' This is basically a wrapper function around the pml function from the phangorn package, made to suit our purposes here
+#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
 #' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
 #' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
 #'
@@ -337,7 +337,6 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
     all.trees <- allTrees(n, tip.label=names(alignment))
     allQ <- vector()
 
-    # 4/2/20 5PM TEST THIS, HASN'T BEEN RUN AT ALL YET
     for (i in 1:length(all.trees)) {
       all.trees[[i]]$edge.length <- rep(0.1, dim(all.trees[[i]]$edge)[1])
       output <- optim.pml(pml(all.trees[[i]], alignment), control=pml.control(trace=0))
@@ -384,3 +383,20 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
   return(best.tree)
   # 4/2/20 I think it's done but could use a little more testing
 }
+
+
+
+
+
+
+
+
+# This is a problem...
+#Error: $ operator is invalid for atomic vectors
+#In addition: Warning messages:
+ # 1: In if (bestQ > Q) { :
+  #    the condition has length > 1 and only the first element will be used
+   # 2: In if (bestQ > Q) { :
+    #    the condition has length > 1 and only the first element will be used
+     # 3: In phy$tip.label <- attr(x, "TipLabel") : Coercing LHS to a list
+
