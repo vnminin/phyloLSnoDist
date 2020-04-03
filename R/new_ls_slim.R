@@ -311,9 +311,13 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
 }
 
 
+
+
 #' Maximum likelihood phylogenetic inference
 #'
-#' This is basically a wrapper function around the pml function from the phangorn package, made to suit our purposes here.
+#' This is basically a wrapper function around the pml function from the phangorn package, made to suit our purposes here
+#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
+#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
 #'
 #' @param alignment a nucleotide sequence alignment, of class phyDat
 #' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
@@ -324,6 +328,7 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
 #' @export
 #' @examples
 #' phylo.ML(seq.table)
+
 phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
 
   n <- length(alignment)
@@ -334,45 +339,48 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
 
     # 4/2/20 5PM TEST THIS, HASN'T BEEN RUN AT ALL YET
     for (i in 1:length(all.trees)) {
-      output <- optim.pml(pml(all.trees[[i]], alignment))
+      all.trees[[i]]$edge.length <- rep(0.1, dim(all.trees[[i]]$edge)[1])
+      output <- optim.pml(pml(all.trees[[i]], alignment), control=pml.control(trace=0))
       all.trees[[i]] <- output$tree
+      all.trees[[i]]$logLik <- output$logLik
       allQ[i] <- output$logLik
     }
 
-    best<-which(allQ==min(allQ))
+    best<-which(allQ==max(allQ))
     best.tree <- all.trees[[best]]
 
   } else {
     # Do nni search
 
     # Start from NJ tree using distance matrix according to JC69
-    data.bin<-as.DNAbin(as.alignment(seq.table))
+    data.bin<-as.DNAbin(alignment)
     D <- as.matrix(dist.dna(data.bin,model="JC69"))
     best.tree <- nj(D)
 
-    output <- new.ls.fit.optimx(my.topology = best.tree, seq.table = seq.table)
-    best.tree$edge.length <- output$par.est
-    best.tree$ls <- output$ls
+    output <- optim.pml(pml(best.tree, alignment), control=pml.control(trace=0))
+    best.tree <- output$tree
+    best.tree$logLik <- output$logLik
 
     Q <- Inf
     bestQ <- 0
     while((Q - bestQ) > tol){
-      Q <- best.tree$ls
+      Q <- best.tree$logLik
 
       nni.trees <- nni(best.tree)  # not sure if the ordering of nni output is deterministic, so store it first
-      nni.output <- lapply(nni.trees, new.ls.fit.optimx, seq.table = seq.table)
-      nniQ <- sapply(nni.output, `[[`, "ls")
-      best <- which(nniQ == min(nniQ))
+      nni.output <- lapply(nni.trees, pml, data = alignment)
+      nniQ <- sapply(nni.output, `[[`, "logLik")
+      best <- which(nniQ == max(nniQ))
       bestQ <- nniQ[best]
 
       if(bestQ > Q){
         bestQ <- Q
       } else {
         best.tree <- nni.trees[[best]]
-        best.tree$edge.length <- nni.output[[best]]$par.est
-        best.tree$ls <- nni.output[[best]]$ls
+        best.tree <- nni.output[[best]]$tree
+        best.tree$logLik <- nni.output[[best]]$logLik
       }
     }
   }
   return(best.tree)
+  # 4/2/20 I think it's done but could use a little more testing
 }
