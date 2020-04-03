@@ -3,14 +3,14 @@ library(phyloLSnoDist)
 set.seed(11312)
 
 reps<-100
-n.sites<-c(200,500,1000,1500,2000)
+n.sites<-c(200,500,1000,2500,5000,10000)
 n.scen <- length(n.sites)
 correct.tp.ls<-rep(0,n.scen)
 correct.tp.nodist<-rep(0,n.scen)
 correct.tp.ml<-rep(0,n.scen)
 
 
-my.tree<-unroot(read.tree(here("analysis", "tree_files", "sim_phylo4-1.tree")))
+my.tree<-unroot(read.tree(here("analysis", "tree_files", "sim_phylo4-6.tree")))
 
 for(s in 1:length(n.sites)){
   for(i in 1:reps){

@@ -356,7 +356,7 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
     D <- as.matrix(dist.dna(data.bin,model="JC69"))
     best.tree <- nj(D)
 
-    output <- optim.pml(pml(best.tree, alignment), control=pml.control(trace=0))
+    output <- optim.pml(pml(best.tree, alignment), control=pml.control(trace=0)) # this might be what messes things up...
     best.tree <- output$tree
     best.tree$logLik <- output$logLik
 
