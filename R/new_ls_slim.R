@@ -1,3 +1,20 @@
+
+#' Maximum likelihood phylogenetic inference
+#'
+#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
+#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
+#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
+#'
+#' @param alignment a nucleotide sequence alignment, of class phyDat
+#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
+#' @return An unrooted phylogeny
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' phylo.ML(seq.table)
+
 regular.ls.loss = function(log.branch.length, my.topology, seq.dist){
 
   ## first bring branch length to the absolute scale
@@ -20,6 +37,23 @@ regular.ls.loss = function(log.branch.length, my.topology, seq.dist){
 
   return(my.ls)
 }
+
+
+#' Maximum likelihood phylogenetic inference
+#'
+#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
+#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
+#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
+#'
+#' @param alignment a nucleotide sequence alignment, of class phyDat
+#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
+#' @return An unrooted phylogeny
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' phylo.ML(seq.table)
 
 
 regular.ls.fit = function(init.brlen, my.topology, seq.dist){
@@ -48,6 +82,21 @@ regular.ls.fit = function(init.brlen, my.topology, seq.dist){
 }
 
 
+#' Maximum likelihood phylogenetic inference
+#'
+#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
+#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
+#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
+#'
+#' @param alignment a nucleotide sequence alignment, of class phyDat
+#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
+#' @return An unrooted phylogeny
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' phylo.ML(seq.table)
 
 
 new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix){
@@ -77,6 +126,23 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix)
 
   return(my.ls)
 }
+
+
+#' Maximum likelihood phylogenetic inference
+#'
+#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
+#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
+#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
+#'
+#' @param alignment a nucleotide sequence alignment, of class phyDat
+#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
+#' @return An unrooted phylogeny
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' phylo.ML(seq.table)
 
 
 # order of arguments changed 4/1/20, might have implications on old code...
@@ -136,6 +202,21 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method=
   return(return.val)
 }
 
+#' Maximum likelihood phylogenetic inference
+#'
+#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
+#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
+#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
+#'
+#' @param alignment a nucleotide sequence alignment, of class phyDat
+#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
+#' @return An unrooted phylogeny
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' phylo.ML(seq.table)
 
 
 read.phylosim.nuc<-function(alignment){
@@ -274,6 +355,9 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
 
     best<-which(allQ==min(allQ))
     best.tree <- all.trees[[best]]
+    if(best.tree$convergence!=0){
+      cat('Warning: convergence not reached on best tree.')
+    }
 
   } else {
     # Do nni search
@@ -297,6 +381,9 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
       nniQ <- sapply(nni.output, `[[`, "ls")
       best <- which(nniQ == min(nniQ))
       bestQ <- nniQ[best]
+      if(nni.output[[best]]$conv!=0){
+        cat('Warning: convergence not reached on best tree.')
+      }
 
       if(bestQ > Q){
         bestQ <- Q
@@ -371,7 +458,7 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
       best <- which(nniQ == max(nniQ))
       bestQ <- nniQ[best]
 
-      if(bestQ > Q){
+      if(bestQ < Q){
         bestQ <- Q
       } else {
         best.tree <- nni.trees[[best]]
