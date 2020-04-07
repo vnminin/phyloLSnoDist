@@ -4,16 +4,16 @@
 \alias{new.ls.loss}
 \title{L2 loss function}
 \usage{
-new.ls.loss(log.branch.length, my.topology, seq.table, regist.matrix)
+new.ls.loss(log.branch.length, my.topology, seq.table)
 }
 \arguments{
 \item{log.branch.length}{natural log of the branch lengths of the phylogeny}
 
 \item{my.topology}{a phylogeny in ape format}
 
-\item{regist.matrix}{4/6/20 I don't know why this is an argument if it is defined in the function...}
-
 \item{seq.dist}{4/6/20 not needed?}
+
+\item{regist.matrix}{4/6/20 I don't know why this is an argument if it is defined in the function...}
 }
 \description{
 This function calculates the L2 loss as described in...

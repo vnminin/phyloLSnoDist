@@ -10,7 +10,9 @@ new.ls.fit.optimx(
   init.brlen = NULL,
   method = "nlminb",
   low = -100,
-  high = 2
+  high = 2,
+  starttests = FALSE,
+  kkt = FALSE
 )
 }
 \arguments{
@@ -25,6 +27,10 @@ new.ls.fit.optimx(
 \item{low}{contraint on optimization. Defaults to -100 which will constrain br len to be min of 3.72e-44}
 
 \item{high}{constraint on optimization. Defaults to 2 which will constrain br len to be max of e^2 ~ 7.389}
+
+\item{starttests}{control parameter for optimx, default to FALSE for speed}
+
+\item{kkt}{control parameter for optimx, default to FALSE for speed}
 }
 \value{
 An unrooted phylogeny

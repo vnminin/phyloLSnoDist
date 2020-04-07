@@ -91,14 +91,15 @@ regular.ls.fit = function(init.brlen, my.topology, seq.dist){
 #' phylo.ML(seq.table)
 
 
-new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix){
+# 4/6/20 timecheck this and see if we can speed it up
+new.ls.loss = function(log.branch.length, my.topology, seq.table){
 
   ## first bring branch length to the absolute scale
   branch.length = exp(log.branch.length)
 
   num.taxa = dim(seq.table)[1]
 
-  my.ls = 0
+  my.ls = matrix(0,nrow=num.taxa,ncol=num.taxa)
 
   my.phylo = my.topology
   my.phylo$edge.length = branch.length
@@ -106,17 +107,17 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix)
   phylo.dist = cophenetic.phylo(my.phylo)
 
   ## define JC69 model with its eigen decomposition
-  regist.mat = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
+  regist.matrix = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
+  jc.69 <- as.eigen(jc.mc(4/3,c(0.25,0.25,0.25,0.25)))
 
   for (i in 2:num.taxa){
     for (j in 1:(i-1)){
-      my.jc <- as.eigen(jc.mc(4/3,c(0.25,0.25,0.25,0.25)))
-      my.jc = rescale.mc(my.jc, phylo.dist[my.phylo$tip.label[i],my.phylo$tip.label[j]])
-      my.ls = my.ls + (phylo.dist[my.phylo$tip.label[i],my.phylo$tip.label[j]] - pair.robust.dist(my.jc, regist.matrix, seq.table[c(my.phylo$tip.label[i],my.phylo$tip.label[j]),]))^2
+      my.jc = rescale.mc(jc.69, phylo.dist[my.phylo$tip.label[i],my.phylo$tip.label[j]])
+      my.ls[i,j] = (phylo.dist[my.phylo$tip.label[i],my.phylo$tip.label[j]] - pair.robust.dist(my.jc, regist.matrix, seq.table[c(my.phylo$tip.label[i],my.phylo$tip.label[j]),]))^2
     }
   }
 
-  return(my.ls)
+  return(sum(my.ls))
 }
 
 
@@ -131,6 +132,8 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix)
 #' @param method option for optimx function to choose which optimization method to use
 #' @param low contraint on optimization. Defaults to -100 which will constrain br len to be min of 3.72e-44
 #' @param high constraint on optimization. Defaults to 2 which will constrain br len to be max of e^2 ~ 7.389
+#' @param starttests control parameter for optimx, default to FALSE for speed
+#' @param kkt control parameter for optimx, default to FALSE for speed
 #'
 #' @return An unrooted phylogeny
 #'
@@ -141,7 +144,7 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix)
 
 
 # order of arguments changed 4/1/20, might have implications on old code...
-new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method="nlminb", low=-100, high=2){
+new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method="nlminb", low=-100, high=2, starttests=FALSE, kkt=FALSE){
 
   if(is.null(init.brlen)){
     init.brlen <- rep(0.1, dim(my.topology$edge)[1])
@@ -154,7 +157,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method=
 
   return.val = NULL
   par.num = length(init.brlen)
-  regist.mat = matrix(1,4,4) - diag(rep(1,4))
+#  regist.mat = matrix(1,4,4) - diag(rep(1,4))
   optim.out<-list(par=1,convcode=1)
   count<-0
 
@@ -169,7 +172,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method=
       method = method,
       my.topology = my.topology,
       seq.table = seq.table,
-      regist.matrix = regist.mat
+      control=list(starttests=starttests, kkt=kkt)
     )
 
     # Keep track of iterations
