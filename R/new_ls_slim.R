@@ -1,19 +1,16 @@
 
-#' Maximum likelihood phylogenetic inference
+#' A phyloLSnoDist function
 #'
-#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
-#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
-#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
+#' This might not be needed. Revisit later.
 #'
-#' @param alignment a nucleotide sequence alignment, of class phyDat
-#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
-#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
-#' @return An unrooted phylogeny
+#' @param log.branch.length Natural log of the branch lengths at which to calculate the loss
+#' @param my.topology A phylogeny in ape format
+#' @param seq.dist not sure
 #'
 #' @keywords phylogeny, OLS
 #' @export
 #' @examples
-#' phylo.ML(seq.table)
+#' regular.ls.loss(log.branch.length, my.topology, seq.dist)
 
 regular.ls.loss = function(log.branch.length, my.topology, seq.dist){
 
@@ -39,21 +36,18 @@ regular.ls.loss = function(log.branch.length, my.topology, seq.dist){
 }
 
 
-#' Maximum likelihood phylogenetic inference
+#' A phyloLSnoDist function
 #'
-#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
-#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
-#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
+#' Not sure if I need this one anymore either.
 #'
-#' @param alignment a nucleotide sequence alignment, of class phyDat
-#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
-#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
-#' @return An unrooted phylogeny
+#' @param init.brlen Initial branch lengths at which to start the search
+#' @param my.topology a phylogeny in ape format
+#' @param seq.dist not sure
 #'
 #' @keywords phylogeny, OLS
 #' @export
 #' @examples
-#' phylo.ML(seq.table)
+#' regular.ls.fit(init.brlen, my.topology, seq.dist)
 
 
 regular.ls.fit = function(init.brlen, my.topology, seq.dist){
@@ -82,16 +76,14 @@ regular.ls.fit = function(init.brlen, my.topology, seq.dist){
 }
 
 
-#' Maximum likelihood phylogenetic inference
+#' L2 loss function
 #'
-#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
-#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
-#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
+#' This function calculates the L2 loss as described in...
 #'
-#' @param alignment a nucleotide sequence alignment, of class phyDat
-#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
-#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
-#' @return An unrooted phylogeny
+#' @param log.branch.length natural log of the branch lengths of the phylogeny
+#' @param my.topology a phylogeny in ape format
+#' @param seq.dist 4/6/20 not needed?
+#' @param regist.matrix 4/6/20 I don't know why this is an argument if it is defined in the function...
 #'
 #' @keywords phylogeny, OLS
 #' @export
@@ -128,15 +120,18 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, regist.matrix)
 }
 
 
-#' Maximum likelihood phylogenetic inference
+#' Find optimal branch lengths according to L2 loss
 #'
-#' This is basically a wrapper around the pml function from the phangorn package, made to suit our purposes here
-#' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
-#' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
+#' This function takes a topology and nucleotide sequence alignment, and finds the optimal branch lengths
+#' according to the new loss function
 #'
-#' @param alignment a nucleotide sequence alignment, of class phyDat
-#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
-#' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
+#' @param my.topology a phylogenetic topology on which to optimize the branch lengths
+#' @param seq.table A nucleotide sequence alignment
+#' @param init.brlen initial branch lengths to use in the optimization routine
+#' @param method option for optimx function to choose which optimization method to use
+#' @param low contraint on optimization. Defaults to -100 which will constrain br len to be min of 3.72e-44
+#' @param high constraint on optimization. Defaults to 2 which will constrain br len to be max of e^2 ~ 7.389
+#'
 #' @return An unrooted phylogeny
 #'
 #' @keywords phylogeny, OLS
@@ -169,8 +164,8 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method=
     optim.out <- optimx(
       log(init.brlen),
       new.ls.loss,
-      lower = rep(low,par.num),	# this should constrain br len to be min of 4.5e-5 (-100 gives 3.72e-44)
-      upper = rep(high,par.num),		# this should constrain br len to be max of e^2 ~ 7.389
+      lower = rep(low,par.num),
+      upper = rep(high,par.num),
       method = method,
       my.topology = my.topology,
       seq.table = seq.table,
