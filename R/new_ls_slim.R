@@ -495,12 +495,12 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
 #' @examples
 #' new.loss.K80(log.br.len, kappa, my.topology, seq.table)
 
-new.loss.K80 = function(log.br.len, log.kappa, my.topology, seq.table){
+new.loss.K80 = function(log.params, my.topology, seq.table){
 
   ## first bring branch length to the absolute scale
-  n.br<-length(log.br.len)
-  branch.length = exp(log.br.len)
-  ts.tv.ratio <- exp(log.kappa)
+  n.br<-length(log.params) - 1
+  branch.length = exp(log.params[1:n.br])
+  ts.tv.ratio <- exp(log.params[n.br+1])
 
   ts.matrix = matrix(c(0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0), 4,4,byrow=TRUE)
   tv.matrix = matrix(1,4,4) - ts.matrix - diag(rep(1,4))
@@ -548,10 +548,11 @@ new.loss.K80 = function(log.br.len, log.kappa, my.topology, seq.table){
 #' @examples
 #' new.loss.K80(log.br.len, kappa, my.topology, seq.table)
 
-new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method="nlminb", low=-100, high=2, starttests=FALSE, kkt=FALSE){
+new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa = NULL, method="nlminb", low=-100, high=2, high.k = 100, starttests=FALSE, kkt=FALSE){
 
-  if(is.null(init.brlen)){
-    init.brlen <- rep(0.1, dim(my.topology$edge)[1])
+  # change from simSeq output to character matrix if needed
+  if(typeof(seq.table) == "list"){
+    seq.table <- as.character(seq.table)
   }
 
   # change A,C,T,G to numeric if needed
@@ -559,9 +560,19 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method=
     seq.table <- read.phylosim.nuc(seq.table)
   }
 
+
+  n.br <- dim(seq.table)[1]*2 - 3
+
+  if(is.null(init.brlen)){
+    init.brlen <- rep(0.1, n.br)
+  }
+
+  if(is.null(init.kappa)){
+    init.kappa <- 1
+  }
+
   return.val = NULL
-  par.num = length(init.brlen)
-  #  regist.mat = matrix(1,4,4) - diag(rep(1,4))
+  par.num = n.br + 1
   optim.out<-list(par=1,convcode=1)
   count<-0
 
@@ -569,10 +580,10 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method=
   while((optim.out$convcode != 0) & count<10){
 
     optim.out <- optimx(
-      log(init.brlen),
-      new.ls.loss,
+      log(c(init.brlen, init.kappa)),
+      new.loss.K80,
       lower = rep(low,par.num),
-      upper = rep(high,par.num),
+      upper = c(rep(high,n.br),high.k),
       method = method,
       my.topology = my.topology,
       seq.table = seq.table,
@@ -583,7 +594,8 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method=
     count<-count+1
 
     # If convergence was not reached, re-initialize starting values to random values
-    init.brlen<-runif(par.num,0,0.5)
+    init.brlen <- runif(n.br,0,0.5)
+    init.kappa <- runif(1, 0, 20)
   }
 
 
