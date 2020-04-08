@@ -470,12 +470,6 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
 }
 
 
-
-
-
-
-
-
 # This is a problem...
 #Error: $ operator is invalid for atomic vectors
 #In addition: Warning messages:
@@ -485,3 +479,186 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
     #    the condition has length > 1 and only the first element will be used
      # 3: In phy$tip.label <- attr(x, "TipLabel") : Coercing LHS to a list
 
+
+
+#' Least Squares K80 without distances
+#'
+#' This function calculates the distance free loss function under the Kimura 2 parameter model (K80).
+#'
+#' @param log.br.len natural log of the branch lengths
+#' @param log.kappa natural log of the transition/transversion ratio
+#' @param my.topology the tree on which to calculate the loss function
+#' @param seq.table a nucleotide sequence alignment
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' new.loss.K80(log.br.len, kappa, my.topology, seq.table)
+
+new.loss.K80 = function(log.br.len, log.kappa, my.topology, seq.table){
+
+  ## first bring branch length to the absolute scale
+  n.br<-length(log.br.len)
+  branch.length = exp(log.br.len)
+  ts.tv.ratio <- exp(log.kappa)
+
+  ts.matrix = matrix(c(0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0), 4,4,byrow=TRUE)
+  tv.matrix = matrix(1,4,4) - ts.matrix - diag(rep(1,4))
+
+  num.taxa = dim(seq.table)[1]
+
+  my.ls = 0
+
+  my.phylo = my.topology
+  my.phylo$edge.length = branch.length
+
+  phylo.dist = cophenetic.phylo(my.phylo)
+
+  for (i in 2:num.taxa){
+    for (j in 1:(i-1)){
+      ## define K80 model with its eigen decomposition
+      my.K80 = as.eigen.hky(c(ts.tv.ratio,1), c(0.25,0.25,0.25,0.25), scale=T)
+      my.K80 = rescale.mc(my.K80, phylo.dist[my.phylo$tip.label[i],my.phylo$tip.label[j]])
+
+      tree.ts.dist = pair.conv.dist(my.K80, ts.matrix)
+      tree.tv.dist = pair.conv.dist(my.K80, tv.matrix)
+
+      robust.ts.dist = pair.robust.dist(my.K80, ts.matrix, seq.table[c(my.phylo$tip.label[i],my.phylo$tip.label[j]),])
+      robust.tv.dist = pair.robust.dist(my.K80, tv.matrix, seq.table[c(my.phylo$tip.label[i],my.phylo$tip.label[j]),])
+
+      my.ls = my.ls + (tree.ts.dist - robust.ts.dist)^2 + (tree.tv.dist - robust.tv.dist)^2
+
+    }
+  }
+  return(my.ls)
+}
+
+
+#' Least Squares K80 without distances
+#'
+#' This function calculates the distance free loss function under the Kimura 2 parameter model (K80).
+#'
+#' @param log.br.len natural log of the branch lengths
+#' @param log.kappa natural log of the transition/transversion ratio
+#' @param my.topology the tree on which to calculate the loss function
+#' @param seq.table a nucleotide sequence alignment
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' new.loss.K80(log.br.len, kappa, my.topology, seq.table)
+
+new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method="nlminb", low=-100, high=2, starttests=FALSE, kkt=FALSE){
+
+  if(is.null(init.brlen)){
+    init.brlen <- rep(0.1, dim(my.topology$edge)[1])
+  }
+
+  # change A,C,T,G to numeric if needed
+  if(typeof(seq.table) == "character"){
+    seq.table <- read.phylosim.nuc(seq.table)
+  }
+
+  return.val = NULL
+  par.num = length(init.brlen)
+  #  regist.mat = matrix(1,4,4) - diag(rep(1,4))
+  optim.out<-list(par=1,convcode=1)
+  count<-0
+
+  # try up to 10 times to reach convergence
+  while((optim.out$convcode != 0) & count<10){
+
+    optim.out <- optimx(
+      log(init.brlen),
+      new.ls.loss,
+      lower = rep(low,par.num),
+      upper = rep(high,par.num),
+      method = method,
+      my.topology = my.topology,
+      seq.table = seq.table,
+      control=list(starttests=starttests, kkt=kkt)
+    )
+
+    # Keep track of iterations
+    count<-count+1
+
+    # If convergence was not reached, re-initialize starting values to random values
+    init.brlen<-runif(par.num,0,0.5)
+  }
+
+
+  # 3/24/20 keeping this out for now as it doesn't seem necessary...
+
+  #  if(!any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
+  #    optim.out$conv<-6		# so, 6 means that it hit the lower boundary
+  #  }
+  #  if(any(unlist(optim.out$par)==0) & !any(unlist(optim.out$par)==low)){
+  #    optim.out$conv<-7		# so, 7 means that it hit the upper boundary
+  #  }
+  #  if(any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
+  #    optim.out$conv<-8		# so, 8 means that it hit both boundaries
+  #  }
+
+
+  return.val<-list(par.est=exp(unlist(optim.out[1:par.num])),ls=unlist(optim.out$value),conv=unlist(optim.out$convcode),count=count)
+  return(return.val)
+}
+
+
+#' K80 eigen decomposition
+#'
+#' This function defines the K80 model via its eigen decomposition.
+#'
+#' @param hky.rates transition and transversion rates
+#' @param mc.stat stationary distribution
+#' @param scale if TRUE then scale the transition matrix. Defaults to FALSE.
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' as.eigen.hky(hky.rates, mc.stat, scale = F)
+
+as.eigen.hky = function(hky.rates, mc.stat, scale = F){
+
+  transition.rate = hky.rates[1]
+  transversion.rate = hky.rates[2]
+
+  left.eigen = matrix(rep(0,16), nrow = 4, ncol = 4)
+  right.eigen = matrix(rep(0,16), nrow = 4, ncol = 4)
+
+  pi.Y = mc.stat[3] + mc.stat[4]
+  pi.R = mc.stat[1] + mc.stat[2]
+
+  left.eigen[,1] = rep(1,4)
+  left.eigen[,2] = c(-1/pi.R,-1/pi.R, 1/pi.Y, 1/pi.Y)
+  left.eigen[,3] = c(mc.stat[2]/pi.R, -mc.stat[1]/pi.R, 0, 0)
+  left.eigen[,4] = c(0, 0, -mc.stat[4]/pi.Y, mc.stat[3]/pi.Y)
+
+  right.eigen[,1] = mc.stat
+  right.eigen[,2] = c(-pi.Y*mc.stat[1],-pi.Y*mc.stat[2], pi.R*mc.stat[3], pi.R*mc.stat[4])
+  right.eigen[,3] = c(1, -1, 0, 0)
+  right.eigen[,4] = c(0, 0, -1, 1)
+
+  ##  right.eigen[,1] = c(mc.stat[4], mc.stat[3],mc.stat[1], mc.stat[2])
+  ##  right.eigen[,2] = c(pi.R*mc.stat[4],pi.R*mc.stat[3], -pi.Y*mc.stat[1], -pi.Y*mc.stat[2])
+  ##  right.eigen[,3] = c(0,0,-1, -1)
+  ##  right.eigen[,4] = c(1,-1,0, 0)
+
+  eigen.val = c(0, -transversion.rate, -(pi.Y*transversion.rate + pi.R*transition.rate),
+                -(pi.Y*transition.rate + pi.R*transversion.rate))
+
+  revmc.eigen = list(hky.mc(hky.rates, mc.stat, scale = F)[[1]],
+                     mc.stat, eigen.val,left.eigen,
+                     t(right.eigen))
+  names(revmc.eigen) = c("rate.matrix", "stationary",
+                         "values", "vectors", "invvectors")
+
+  class(revmc.eigen) = c("revmc", "eigen")
+
+  if (scale){
+    revmc.eigen = rescale.mc(revmc.eigen, 1.0/sum(-mc.stat*diag(revmc.eigen$rate.matrix)))
+  }
+
+  return(revmc.eigen)
+
+}
