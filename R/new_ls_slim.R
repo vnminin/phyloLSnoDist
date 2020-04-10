@@ -146,65 +146,69 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table){
 # order of arguments changed 4/1/20, might have implications on old code...
 new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="nlminb", low=-100, high=NULL, starttests=TRUE, kkt=TRUE){
 
-  if(is.null(init.brlen)){
-    init.brlen <- rep(0.1, dim(my.topology$edge)[1])
+  if(class(seq.table)!="phyDat"){
+    cat('Error: alignment must be of class phyDat')
+  } else{
+
+    # If not otherwise specified, use 0.1 as starting value for all branches
+    if(is.null(init.brlen)){
+      init.brlen <- rep(0.1, dim(my.topology$edge)[1])
+    }
+
+    # If not otherwise specified, use max of pairwise distances as the upper limit
+    if(is.null(high)){
+      pair.dists <- dist.dna(as.DNAbin(alignment))
+      high <- log(max(pair.dists))
+    }
+
+    seq.table <- read.phylosim.nuc(as.character(seq.table))
+
+    return.val = NULL
+    par.num = length(init.brlen)
+    #  regist.mat = matrix(1,4,4) - diag(rep(1,4))
+    optim.out<-list(par=1,convcode=1)
+    count<-0
+
+    # try up to 10 times to reach convergence
+    while((optim.out$convcode != 0) & count<10){
+
+      optim.out <- optimx(
+        log(init.brlen),
+        new.ls.loss,
+        lower = rep(low,par.num),
+        upper = rep(high,par.num),
+        method = method,
+        my.topology = my.topology,
+        seq.table = seq.table,
+        control=list(starttests=starttests, kkt=kkt)
+      )
+
+      # Keep track of iterations
+      count<-count+1
+
+      # If convergence was not reached, re-initialize starting values to random values
+      init.brlen<-runif(par.num,0,0.1)  # 4/10/20 changed from 0.5 to 0.1 because I suspect that smaller starting values will be better
+    }
+
+
+    # 3/24/20 keeping this out for now as it doesn't seem necessary...
+
+    #  if(!any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
+    #    optim.out$conv<-6		# so, 6 means that it hit the lower boundary
+    #  }
+    #  if(any(unlist(optim.out$par)==0) & !any(unlist(optim.out$par)==low)){
+    #    optim.out$conv<-7		# so, 7 means that it hit the upper boundary
+    #  }
+    #  if(any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
+    #    optim.out$conv<-8		# so, 8 means that it hit both boundaries
+    #  }
+
+    return.val<-list(par.est=exp(unlist(optim.out[1:par.num])),ls=unlist(optim.out$value),conv=unlist(optim.out$convcode),count=count)
+    return(return.val)
   }
 
-
-  # change simSeq output to character matrix if needed
-  if(class(seq.table) == "phyDat"){
-    seq.table <- as.character(seq.table)
-  }
-
-  # change A,C,T,G to numeric if needed
-  if(typeof(seq.table) == "character"){
-    seq.table <- read.phylosim.nuc(seq.table)
-  }
-
-  return.val = NULL
-  par.num = length(init.brlen)
-#  regist.mat = matrix(1,4,4) - diag(rep(1,4))
-  optim.out<-list(par=1,convcode=1)
-  count<-0
-
-  # try up to 10 times to reach convergence
-  while((optim.out$convcode != 0) & count<10){
-
-    optim.out <- optimx(
-      log(init.brlen),
-      new.ls.loss,
-      lower = rep(low,par.num),
-      upper = rep(high,par.num),
-      method = method,
-      my.topology = my.topology,
-      seq.table = seq.table,
-      control=list(starttests=starttests, kkt=kkt)
-    )
-
-    # Keep track of iterations
-    count<-count+1
-
-    # If convergence was not reached, re-initialize starting values to random values
-    init.brlen<-runif(par.num,0,0.1)  # 4/10/20 changed from 0.5 to 0.1 because I suspect that smaller starting values will be better
-  }
-
-
-# 3/24/20 keeping this out for now as it doesn't seem necessary...
-
-#  if(!any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
-#    optim.out$conv<-6		# so, 6 means that it hit the lower boundary
-#  }
-#  if(any(unlist(optim.out$par)==0) & !any(unlist(optim.out$par)==low)){
-#    optim.out$conv<-7		# so, 7 means that it hit the upper boundary
-#  }
-#  if(any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
-#    optim.out$conv<-8		# so, 8 means that it hit both boundaries
-#  }
-
-
-  return.val<-list(par.est=exp(unlist(optim.out[1:par.num])),ls=unlist(optim.out$value),conv=unlist(optim.out$convcode),count=count)
-  return(return.val)
 }
+
 
 #' Maximum likelihood phylogenetic inference
 #'
@@ -344,7 +348,6 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
   if(class(alignment) != "phyDat"){
     cat('Error: alignment must be of class phyDat')
   } else {
-  #  n <- nrow(seq.table)   # I don't think I need this...
 
     # If not otherwise specified, use max of pairwise distances as the upper limit
     if(is.null(high)){
