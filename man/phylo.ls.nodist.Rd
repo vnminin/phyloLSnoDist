@@ -10,12 +10,14 @@ phylo.ls.nodist(
   search.all = FALSE,
   method = "nlminb",
   low = -100,
-  high = 2,
-  tol = 1e-10
+  high = NULL,
+  tol = 1e-10,
+  bound_rm = TRUE
 )
 }
 \arguments{
-\item{alignment}{a nucleotide sequence alignment, of class phyDat}
+\item{alignment}{a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
+function from \code{phangorn} package to transform data if necessary.}
 
 \item{initvals}{starting values for each branch}
 
@@ -38,6 +40,7 @@ all possible topologies (if not, it will do an NNI search, starting from the NJ 
 }
 \examples{
 phylo.ls.nodist(seq.table)
+
 }
 \keyword{OLS}
 \keyword{phylogeny,}

@@ -127,7 +127,9 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table){
 #' according to the new loss function
 #'
 #' @param my.topology a phylogenetic topology on which to optimize the branch lengths
-#' @param seq.table A nucleotide sequence alignment
+#' @param seq.table a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
+#' function from \code{phangorn} package to transform data if necessary.
+#' @param initvals starting values for each branch
 #' @param init.brlen initial branch lengths to use in the optimization routine
 #' @param method option for optimx function to choose which optimization method to use
 #' @param low contraint on optimization. Defaults to -100 which will constrain br len to be min of 3.72e-44
@@ -216,7 +218,9 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
 #' and perform either an exhaustive search through all topologies or an NNI search with pml as the workhorse.
 #' I don't really recommend that anyone should use this function instead of optim.pml from phangorn unless you see a strong reason to.
 #'
-#' @param alignment a nucleotide sequence alignment, of class phyDat
+#' @param alignment a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
+#' function from \code{phangorn} package to transform data if necessary.
+#' @param initvals starting values for each branch
 #' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
 #' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
 #' @return An unrooted phylogeny
@@ -255,7 +259,9 @@ read.phylosim.nuc<-function(alignment){
 #' from Liam Revell's optim.phylo.ls. The main difference is that it allows for an exhaustive search among
 #' all possible topologies (if not, it will do an NNI search, starting from the NJ tree). This function infers an unrooted tree.
 #'
-#' @param alignment a nucleotide sequence alignment, of class phyDat
+#' @param alignment a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
+#' function from \code{phangorn} package to transform data if necessary.
+#' @param initvals starting values for each branch
 #' @param set.neg.to.zero if TRUE, negative branch lengths will be converted to 0
 #' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
 #' @param model substitution model for which to calculate the distance matrix
@@ -326,7 +332,8 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
 #' This function performs phylogenetic inference via least squares with our new loss function. It allows for an exhaustive search among
 #' all possible topologies (if not, it will do an NNI search, starting from the NJ tree). This function infers an unrooted tree.
 #'
-#' @param alignment a nucleotide sequence alignment, of class phyDat
+#' @param alignment a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
+#' function from \code{phangorn} package to transform data if necessary.
 #' @param initvals starting values for each branch
 #' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
 #' @param method optimization method for optimx function
@@ -510,17 +517,6 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
   return(best.tree)
   # 4/2/20 I think it's done but could use a little more testing
 }
-
-
-# This is a problem...
-#Error: $ operator is invalid for atomic vectors
-#In addition: Warning messages:
- # 1: In if (bestQ > Q) { :
-  #    the condition has length > 1 and only the first element will be used
-   # 2: In if (bestQ > Q) { :
-    #    the condition has length > 1 and only the first element will be used
-     # 3: In phy$tip.label <- attr(x, "TipLabel") : Coercing LHS to a list
-
 
 
 #' Least Squares K80 without distances
@@ -716,3 +712,17 @@ as.eigen.hky = function(hky.rates, mc.stat, scale = F){
   return(revmc.eigen)
 
 }
+
+
+
+# This is a problem...
+#Error: $ operator is invalid for atomic vectors
+#In addition: Warning messages:
+# 1: In if (bestQ > Q) { :
+#    the condition has length > 1 and only the first element will be used
+# 2: In if (bestQ > Q) { :
+#    the condition has length > 1 and only the first element will be used
+# 3: In phy$tip.label <- attr(x, "TipLabel") : Coercing LHS to a list
+
+
+

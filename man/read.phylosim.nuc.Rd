@@ -7,7 +7,10 @@
 read.phylosim.nuc(alignment)
 }
 \arguments{
-\item{alignment}{a nucleotide sequence alignment, of class phyDat}
+\item{alignment}{a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
+function from \code{phangorn} package to transform data if necessary.}
+
+\item{initvals}{starting values for each branch}
 
 \item{search.all}{if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.}
 

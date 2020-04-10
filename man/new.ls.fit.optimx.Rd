@@ -10,15 +10,16 @@ new.ls.fit.optimx(
   init.brlen = NULL,
   method = "nlminb",
   low = -100,
-  high = 2,
-  starttests = FALSE,
-  kkt = FALSE
+  high = NULL,
+  starttests = TRUE,
+  kkt = TRUE
 )
 }
 \arguments{
 \item{my.topology}{a phylogenetic topology on which to optimize the branch lengths}
 
-\item{seq.table}{A nucleotide sequence alignment}
+\item{seq.table}{a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
+function from \code{phangorn} package to transform data if necessary.}
 
 \item{init.brlen}{initial branch lengths to use in the optimization routine}
 
@@ -31,6 +32,8 @@ new.ls.fit.optimx(
 \item{starttests}{control parameter for optimx, default to FALSE for speed}
 
 \item{kkt}{control parameter for optimx, default to FALSE for speed}
+
+\item{initvals}{starting values for each branch}
 }
 \value{
 An unrooted phylogeny

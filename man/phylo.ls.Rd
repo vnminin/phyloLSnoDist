@@ -13,6 +13,9 @@ phylo.ls(
 )
 }
 \arguments{
+\item{alignment}{a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
+function from \code{phangorn} package to transform data if necessary.}
+
 \item{set.neg.to.zero}{if TRUE, negative branch lengths will be converted to 0}
 
 \item{search.all}{if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.}
@@ -21,7 +24,7 @@ phylo.ls(
 
 \item{tol}{in NNI search, keep searching if improvement is at least this amount}
 
-\item{seq.table}{a nucleotide sequence alignment, formatted as an n x s character matrix where n = # of taxa, s = # of sites}
+\item{initvals}{starting values for each branch}
 }
 \description{
 This function performs phylogenetic inference via ordinary least squares. It was written taking elements
