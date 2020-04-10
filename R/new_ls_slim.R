@@ -415,7 +415,7 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
 
         if(bound_rm){
           hit.bound <- apply(sapply(nni.trees, `[[`, "edge.length")==exp(2), 2, sum) + apply(sapply(nni.trees, `[[`, "edge.length")==exp(-100), 2, sum)
-          nni.trees <- all.trees[hit.bound==0]
+          nni.trees <- nni.trees[hit.bound==0]
           nniQ <- nniQ[hit.bound==0]
         }
 
