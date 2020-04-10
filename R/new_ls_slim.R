@@ -152,7 +152,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
 
 
   # change simSeq output to character matrix if needed
-  if(typeof(seq.table) == "list"){
+  if(class(seq.table) == "phyDat"){
     seq.table <- as.character(seq.table)
   }
 
@@ -185,7 +185,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
     count<-count+1
 
     # If convergence was not reached, re-initialize starting values to random values
-    init.brlen<-runif(par.num,0,0.5)
+    init.brlen<-runif(par.num,0,0.1)  # 4/10/20 changed from 0.5 to 0.1 because I suspect that smaller starting values will be better
   }
 
 
@@ -338,75 +338,87 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
 #'
 
 # 4/9/20 not sure if bound_rm is a good idea. try the JC69 constraint idea and see if that does it.
-phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=2, tol = 1e-10, bound_rm = TRUE){
-  seq.table <- as.character(alignment)
-  n <- nrow(seq.table)
+phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=NULL, tol = 1e-10, bound_rm = TRUE){
+#  seq.table <- as.character(alignment)   # keep it as phyDat
 
-  if(search.all){
-    all.trees <- allTrees(n,tip.label=row.names(seq.table))
-    allQ <- vector()
-
-    # for loop is same speed as using lapply. Not sure if I can speed this up at all.
-    for (i in 1:length(all.trees)) {
-      output <- new.ls.fit.optimx(all.trees[[i]], seq.table, initvals, method, low, high) # 3/30/20 check this
-      all.trees[[i]]$edge.length <- output$par.est
-      all.trees[[i]]$ls <- output$ls
-
-      if(output$conv!=0){
-        cat('Warning: convergence not reached on at least one potential tree','\n')
-      }
-      all.trees[[i]]$convergence <- output$conv
-      allQ[i] <- output$ls
-    }
-
-    if(bound_rm){
-      hit.bound <- apply(sapply(all.trees, `[[`, "edge.length")==exp(2), 2, sum) + apply(sapply(all.trees, `[[`, "edge.length")==exp(100), 2, sum)
-      all.trees <- all.trees[hit.bound==0]
-      allQ <- allQ[hit.bound==0]
-    }
-
-    best<-which(allQ==min(allQ))
-    best.tree <- all.trees[[best]]
-    if(best.tree$convergence!=0){
-      cat('Warning: convergence not reached on best tree.')
-    }
-
+  if(class(alignment) != "phyDat"){
+    cat('Error: alignment must be of class phyDat')
   } else {
-    # Do nni search
+  #  n <- nrow(seq.table)   # I don't think I need this...
 
-    # Start from NJ tree using distance matrix according to JC69
-    data.bin<-as.DNAbin(as.alignment(seq.table))
-    D <- as.matrix(dist.dna(data.bin,model="JC69"))
-    best.tree <- nj(D)
+    # If not otherwise specified, use max of pairwise distances as the upper limit
+    if(is.null(high)){
+      pair.dists <- dist.dna(as.DNAbin(alignment))
+      high <- log(max(pair.dists))
+    }
 
-    output <- new.ls.fit.optimx(my.topology = best.tree, seq.table = seq.table)
-    best.tree$edge.length <- output$par.est
-    best.tree$ls <- output$ls
+    if(search.all){
+      all.trees <- allTrees(n,tip.label=row.names(seq.table))
+      allQ <- vector()
 
-    Q <- Inf
-    bestQ <- 0
-    while((Q - bestQ) > tol){
-      Q <- best.tree$ls
+      # for loop is same speed as using lapply. Not sure if I can speed this up at all.
+      for (i in 1:length(all.trees)) {
+        output <- new.ls.fit.optimx(all.trees[[i]], alignment, initvals, method, low, high) # 3/30/20 check this
+        all.trees[[i]]$edge.length <- output$par.est
+        all.trees[[i]]$ls <- output$ls
 
-      nni.trees <- nni(best.tree)  # not sure if the ordering of nni output is deterministic, so store it first
-      nni.output <- lapply(nni.trees, new.ls.fit.optimx, seq.table = seq.table)
-      nniQ <- sapply(nni.output, `[[`, "ls")
-      best <- which(nniQ == min(nniQ))
-      bestQ <- nniQ[best]
-      if(nni.output[[best]]$conv!=0){
+        if(output$conv!=0){
+          cat('Warning: convergence not reached on at least one potential tree','\n')
+        }
+        all.trees[[i]]$convergence <- output$conv
+        allQ[i] <- output$ls
+      }
+
+      if(bound_rm){
+        hit.bound <- apply(sapply(all.trees, `[[`, "edge.length")==exp(2), 2, sum) + apply(sapply(all.trees, `[[`, "edge.length")==exp(-100), 2, sum)
+        all.trees <- all.trees[hit.bound==0]
+        allQ <- allQ[hit.bound==0]
+      }
+
+      best<-which(allQ==min(allQ))
+      best.tree <- all.trees[[best]]
+      if(best.tree$convergence!=0){
         cat('Warning: convergence not reached on best tree.')
       }
 
-      if(bestQ > Q){
-        bestQ <- Q
-      } else {
-        best.tree <- nni.trees[[best]]
-        best.tree$edge.length <- nni.output[[best]]$par.est
-        best.tree$ls <- nni.output[[best]]$ls
+    } else {
+      # Do nni search
+
+      # Start from NJ tree using distance matrix according to JC69
+      data.bin<-as.DNAbin(alignment)
+      D <- as.matrix(dist.dna(data.bin,model="JC69"))
+      best.tree <- nj(D)
+
+      output <- new.ls.fit.optimx(my.topology = best.tree, seq.table = alignment)
+      best.tree$edge.length <- output$par.est
+      best.tree$ls <- output$ls
+
+      Q <- Inf
+      bestQ <- 0
+      while((Q - bestQ) > tol){
+        Q <- best.tree$ls
+
+        nni.trees <- nni(best.tree)  # not sure if the ordering of nni output is deterministic, so store it first
+        nni.output <- lapply(nni.trees, new.ls.fit.optimx, seq.table = seq.table)
+        nniQ <- sapply(nni.output, `[[`, "ls")
+        best <- which(nniQ == min(nniQ))
+        bestQ <- nniQ[best]
+        if(nni.output[[best]]$conv!=0){
+          cat('Warning: convergence not reached on best tree.')
+        }
+
+        if(bestQ > Q){
+          bestQ <- Q
+        } else {
+          best.tree <- nni.trees[[best]]
+          best.tree$edge.length <- nni.output[[best]]$par.est
+          best.tree$ls <- nni.output[[best]]$ls
+        }
       }
     }
+    return(best.tree)
+
   }
-  return(best.tree)
 }
 
 
