@@ -402,20 +402,33 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
         Q <- best.tree$ls
 
         nni.trees <- nni(best.tree)  # not sure if the ordering of nni output is deterministic, so store it first
-        nni.output <- lapply(nni.trees, new.ls.fit.optimx, seq.table = seq.table)
+        nni.output <- lapply(nni.trees, new.ls.fit.optimx, seq.table = alignment)
         nniQ <- sapply(nni.output, `[[`, "ls")
-        best <- which(nniQ == min(nniQ))
-        bestQ <- nniQ[best]
-        if(nni.output[[best]]$conv!=0){
-          cat('Warning: convergence not reached on best tree.')
+
+
+        if(bound_rm){
+          hit.bound <- apply(sapply(nni.trees, `[[`, "edge.length")==exp(2), 2, sum) + apply(sapply(nni.trees, `[[`, "edge.length")==exp(-100), 2, sum)
+          nni.trees <- all.trees[hit.bound==0]
+          nniQ <- nniQ[hit.bound==0]
         }
 
-        if(bestQ > Q){
+        if(length(nniQ)==0){
           bestQ <- Q
         } else {
-          best.tree <- nni.trees[[best]]
-          best.tree$edge.length <- nni.output[[best]]$par.est
-          best.tree$ls <- nni.output[[best]]$ls
+          best <- which(nniQ == min(nniQ))
+          bestQ <- nniQ[best]
+          if(nni.output[[best]]$conv!=0){
+            cat('Warning: convergence not reached on best tree.')
+          }
+
+          if(bestQ > Q){
+            bestQ <- Q
+          } else {
+            best.tree <- nni.trees[[best]]
+            best.tree$edge.length <- nni.output[[best]]$par.est
+            best.tree$ls <- nni.output[[best]]$ls
+
+          }
         }
       }
     }
