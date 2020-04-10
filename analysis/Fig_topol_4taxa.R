@@ -4,7 +4,7 @@ library(tictoc)
 set.seed(11312)
 
 reps<-100
-n.sites<-c(200,500,1000,2500,5000,10000)
+n.sites<-c(200,500,2500,10000)
 n.scen <- length(n.sites)
 correct.tp.ls<-rep(0,n.scen)
 correct.tp.nodist<-rep(0,n.scen)
@@ -13,7 +13,6 @@ correct.tp.ml<-rep(0,n.scen)
 
 my.tree<-unroot(read.tree(here("analysis", "tree_files", "sim_phylo4-6.tree")))
 
-tic()
 for(s in 1:length(n.sites)){
   for(i in 1:reps){
     my.align <- simSeq(x = my.tree, l = n.sites[s])
@@ -30,7 +29,6 @@ for(s in 1:length(n.sites)){
 
   }
 }
-toc()
 
 save.image(here("analysis", "Fig_topol_4taxa.RData"))
 

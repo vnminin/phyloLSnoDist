@@ -159,7 +159,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
 
     # If not otherwise specified, use max of pairwise distances as the upper limit
     if(is.null(high)){
-      pair.dists <- dist.dna(as.DNAbin(alignment))
+      pair.dists <- dist.dna(as.DNAbin(seq.table))
       high <- log(max(pair.dists))
     }
 
@@ -363,7 +363,7 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
     }
 
     if(search.all){
-      all.trees <- allTrees(n,tip.label=row.names(seq.table))
+      all.trees <- allTrees(length(my.align),tip.label=names(alignment))
       allQ <- vector()
 
       # for loop is same speed as using lapply. Not sure if I can speed this up at all.

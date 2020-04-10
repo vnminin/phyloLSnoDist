@@ -1,5 +1,4 @@
 library(phyloLSnoDist)
-library(tictoc)
 
 set.seed(11312)
 
@@ -13,7 +12,6 @@ correct.tp.ml<-rep(0,n.scen)
 
 my.tree<-unroot(read.tree(here("analysis", "tree_files", "sim_phylo6-14.tree")))
 
-tic()
 for(s in 1:length(n.sites)){
   for(i in 1:reps){
     my.align <- simSeq(x = my.tree, l = n.sites[s])
@@ -27,10 +25,9 @@ for(s in 1:length(n.sites)){
     correct.tp.ml[s] <- ifelse(all.equal(my.tree, ml.tree, use.edge.length = F), correct.tp.ml[s]+1, correct.tp.ml[s])
 
     print(i)
-
+    save.image(here("analysis", "Fig_topol_6taxa.RData"))
   }
 }
-toc()
 
 save.image(here("analysis", "Fig_topol_6taxa.RData"))
 
