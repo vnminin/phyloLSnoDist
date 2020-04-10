@@ -144,10 +144,16 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table){
 
 
 # order of arguments changed 4/1/20, might have implications on old code...
-new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen = NULL, method="nlminb", low=-100, high=2, starttests=FALSE, kkt=FALSE){
+new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="nlminb", low=-100, high=NULL, starttests=TRUE, kkt=TRUE){
 
   if(is.null(init.brlen)){
     init.brlen <- rep(0.1, dim(my.topology$edge)[1])
+  }
+
+
+  # change simSeq output to character matrix if needed
+  if(typeof(seq.table) == "list"){
+    seq.table <- as.character(seq.table)
   }
 
   # change A,C,T,G to numeric if needed
@@ -245,7 +251,7 @@ read.phylosim.nuc<-function(alignment){
 #' from Liam Revell's optim.phylo.ls. The main difference is that it allows for an exhaustive search among
 #' all possible topologies (if not, it will do an NNI search, starting from the NJ tree). This function infers an unrooted tree.
 #'
-#' @param seq.table a nucleotide sequence alignment, formatted as an n x s character matrix where n = # of taxa, s = # of sites
+#' @param alignment a nucleotide sequence alignment, of class phyDat
 #' @param set.neg.to.zero if TRUE, negative branch lengths will be converted to 0
 #' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
 #' @param model substitution model for which to calculate the distance matrix
@@ -256,8 +262,7 @@ read.phylosim.nuc<-function(alignment){
 #' @examples
 #' phylo.ls(seq.table)
 phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, model="JC69", tol = 1e-10){
-  seq.table <- as.character(alignment)
-  data.bin<-as.DNAbin(as.alignment(seq.table))
+  data.bin<-as.DNAbin(alignment)
   D <- as.matrix(dist.dna(data.bin,model=model))
   n <- nrow(D)
 
@@ -268,7 +273,7 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
 
   if(search.all){
     # Do search through all possible topologies
-    all.trees <- allTrees(n, tip.label = row.names(as.matrix(D))) # change this (as.matrix(D) is redundant)
+    all.trees <- allTrees(n, tip.label = row.names(D)) # change this (as.matrix(D) is redundant)
     allQ <- vector()
     bestQ <- Inf
 
@@ -330,7 +335,10 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
 #' @export
 #' @examples
 #' phylo.ls.nodist(seq.table)
-phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=2, tol = 1e-10){
+#'
+
+# 4/9/20 not sure if bound_rm is a good idea. try the JC69 constraint idea and see if that does it.
+phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=2, tol = 1e-10, bound_rm = TRUE){
   seq.table <- as.character(alignment)
   n <- nrow(seq.table)
 
@@ -349,6 +357,12 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
       }
       all.trees[[i]]$convergence <- output$conv
       allQ[i] <- output$ls
+    }
+
+    if(bound_rm){
+      hit.bound <- apply(sapply(all.trees, `[[`, "edge.length")==exp(2), 2, sum) + apply(sapply(all.trees, `[[`, "edge.length")==exp(100), 2, sum)
+      all.trees <- all.trees[hit.bound==0]
+      allQ <- allQ[hit.bound==0]
     }
 
     best<-which(allQ==min(allQ))
