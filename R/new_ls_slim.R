@@ -160,7 +160,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
     # If not otherwise specified, use max of pairwise distances as the upper limit
     if(is.null(high)){
       pair.dists <- dist.dna(as.DNAbin(seq.table))
-      high <- log(max(pair.dists))
+      high <- log(max(pair.dists, na.rm=TRUE))
     }
 
     seq.table <- read.phylosim.nuc(as.character(seq.table))
