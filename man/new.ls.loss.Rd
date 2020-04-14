@@ -11,9 +11,7 @@ new.ls.loss(log.branch.length, my.topology, seq.table)
 
 \item{my.topology}{a phylogeny in ape format}
 
-\item{seq.dist}{4/6/20 not needed?}
-
-\item{regist.matrix}{4/6/20 I don't know why this is an argument if it is defined in the function...}
+\item{seq.table}{A numeric matrix of values 1-4 for each nucleotide type. Use function \code{read.phylosim.nuc} to transform character matrix to numeric if needed.}
 }
 \description{
 This function calculates the L2 loss as described in...

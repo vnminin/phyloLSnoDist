@@ -5,7 +5,6 @@
 # source("/homes/peterchi/LeastSquares/new_ls.R")
 # source("/homes/peterchi/Recombination/dss-func.R")
 library(phyloLSnoDist)
-library(robustDist)
 
 
 set.seed(11312)
@@ -35,9 +34,9 @@ for(l in 1:n.scen){
 
 
    for(i in 1:reps){
-     my.align <- as.character(simSeq(my.tree, 1000))
+     my.align <- simSeq(my.tree, 1000)
 
-     data.bin<-as.DNAbin(as.alignment(my.align))
+     data.bin<-as.DNAbin(as.alignment(as.character(my.align)))
      ols.tree <- nnls.tree(as.matrix(dist.dna(data.bin,model="JC69")),unroot(my.tree),trace=0)
 
      # re-order branches to match input
@@ -48,7 +47,6 @@ for(l in 1:n.scen){
      }
 
 
-     my.align <- read.phylosim.nuc(my.align)
      optim.out <- new.ls.fit.optimx(unroot(my.tree), my.align) # arguments redone 4/1/20 but haven't re-run to test
      new.brlen[i,] <- optim.out$par.est
      counts[l,i] <- optim.out$count

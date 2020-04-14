@@ -11,8 +11,10 @@ new.ls.fit.optimx(
   method = "nlminb",
   low = -100,
   high = NULL,
+  max.attempts = 5,
   starttests = TRUE,
-  kkt = TRUE
+  kkt = TRUE,
+  rel.tol = 1e-04
 )
 }
 \arguments{

@@ -82,8 +82,7 @@ regular.ls.fit = function(init.brlen, my.topology, seq.dist){
 #'
 #' @param log.branch.length natural log of the branch lengths of the phylogeny
 #' @param my.topology a phylogeny in ape format
-#' @param seq.dist 4/6/20 not needed?
-#' @param regist.matrix 4/6/20 I don't know why this is an argument if it is defined in the function...
+#' @param seq.table A numeric matrix of values 1-4 for each nucleotide type. Use function \code{read.phylosim.nuc} to transform character matrix to numeric if needed.
 #'
 #' @keywords phylogeny, OLS
 #' @export
@@ -146,7 +145,7 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table){
 
 
 # order of arguments changed 4/1/20, might have implications on old code...
-new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="nlminb", low=-100, high=NULL, starttests=TRUE, kkt=TRUE){
+new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="nlminb", low=-100, high=NULL, max.attempts=5, starttests=TRUE, kkt=TRUE, rel.tol=1e-4){
 
   if(class(seq.table)!="phyDat"){
     cat('Error: alignment must be of class phyDat')
@@ -172,7 +171,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
     count<-0
 
     # try up to 10 times to reach convergence
-    while((optim.out$convcode != 0) & count<10){
+    while((optim.out$convcode != 0) & count<max.attempts){
 
       optim.out <- optimx(
         log(init.brlen),
@@ -182,14 +181,14 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
         method = method,
         my.topology = my.topology,
         seq.table = seq.table,
-        control=list(starttests=starttests, kkt=kkt)
+        control=list(starttests=starttests, kkt=kkt, rel.tol=rel.tol)
       )
 
       # Keep track of iterations
       count<-count+1
 
       # If convergence was not reached, re-initialize starting values to random values
-      init.brlen<-runif(par.num,0,0.1)  # 4/10/20 changed from 0.5 to 0.1 because I suspect that smaller starting values will be better
+      init.brlen<-runif(par.num,0,0.5)  # 4/10/20 changed from 0.5 to 0.1 because I suspect that smaller starting values will be better
     }
 
 
