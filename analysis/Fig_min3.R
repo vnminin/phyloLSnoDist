@@ -1,5 +1,4 @@
 library(phyloLSnoDist)
-library(robustDist)
 
 ####################################################
 # 1 row for each of 5, 6, 7 taxa
