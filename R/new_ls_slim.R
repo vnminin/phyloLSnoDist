@@ -585,72 +585,73 @@ new.loss.K80 = function(log.params, my.topology, seq.table){
 #' @examples
 #' new.loss.K80(log.br.len, kappa, my.topology, seq.table)
 
-new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa = NULL, method="nlminb", low=-100, high=2, high.k = 100, starttests=FALSE, kkt=FALSE){
+new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa = NULL, method="nlminb", low=-100, high=NULL, high.k = 100, rel.tol=1e-4, starttests=TRUE, kkt=TRUE){
+  if(class(seq.table)!="phyDat"){
+    cat('Error: alignment must be of class phyDat')
+  } else{
 
-  # change from simSeq output to character matrix if needed
-  if(typeof(seq.table) == "list"){
-    seq.table <- as.character(seq.table)
+    # If not otherwise specified, use max of pairwise distances as the upper limit
+    if(is.null(high)){
+      pair.dists <- dist.dna(as.DNAbin(seq.table))
+      high <- log(max(pair.dists, na.rm=TRUE))
+    }
+
+
+    if(is.null(init.brlen)){
+      init.brlen <- rep(0.1, n.br)
+    }
+
+    if(is.null(init.kappa)){
+      init.kappa <- 1
+    }
+
+    seq.table <- read.phylosim.nuc(as.character(seq.table))
+    n.br <- dim(seq.table)[1]*2 - 3
+    par.num = n.br + 1
+    return.val = NULL
+    optim.out<-list(par=1,convcode=1)
+    count<-0
+
+    # try up to 10 times to reach convergence
+    while((optim.out$convcode != 0) & count<10){
+
+      optim.out <- optimx(
+        log(c(init.brlen, init.kappa)),
+        new.loss.K80,
+        lower = rep(low,par.num),
+        upper = c(rep(high,n.br),high.k),
+        method = method,
+        my.topology = my.topology,
+        seq.table = seq.table,
+        control=list(starttests=starttests, kkt=kkt, rel.tol=rel.tol)
+      )
+
+      # Keep track of iterations
+      count<-count+1
+
+      # If convergence was not reached, re-initialize starting values to random values
+      init.brlen <- runif(n.br,0,0.5)
+      init.kappa <- runif(1, 0, 20)
+    }
+
+
+    # 3/24/20 keeping this out for now as it doesn't seem necessary...
+
+    #  if(!any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
+    #    optim.out$conv<-6		# so, 6 means that it hit the lower boundary
+    #  }
+    #  if(any(unlist(optim.out$par)==0) & !any(unlist(optim.out$par)==low)){
+    #    optim.out$conv<-7		# so, 7 means that it hit the upper boundary
+    #  }
+    #  if(any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
+    #    optim.out$conv<-8		# so, 8 means that it hit both boundaries
+    #  }
+
+
+    return.val<-list(par.est=exp(unlist(optim.out[1:par.num])),ls=unlist(optim.out$value),conv=unlist(optim.out$convcode),count=count)
+    return(return.val)
   }
 
-  # change A,C,T,G to numeric if needed
-  if(typeof(seq.table) == "character"){
-    seq.table <- read.phylosim.nuc(seq.table)
-  }
-
-
-  n.br <- dim(seq.table)[1]*2 - 3
-
-  if(is.null(init.brlen)){
-    init.brlen <- rep(0.1, n.br)
-  }
-
-  if(is.null(init.kappa)){
-    init.kappa <- 1
-  }
-
-  return.val = NULL
-  par.num = n.br + 1
-  optim.out<-list(par=1,convcode=1)
-  count<-0
-
-  # try up to 10 times to reach convergence
-  while((optim.out$convcode != 0) & count<10){
-
-    optim.out <- optimx(
-      log(c(init.brlen, init.kappa)),
-      new.loss.K80,
-      lower = rep(low,par.num),
-      upper = c(rep(high,n.br),high.k),
-      method = method,
-      my.topology = my.topology,
-      seq.table = seq.table,
-      control=list(starttests=starttests, kkt=kkt)
-    )
-
-    # Keep track of iterations
-    count<-count+1
-
-    # If convergence was not reached, re-initialize starting values to random values
-    init.brlen <- runif(n.br,0,0.5)
-    init.kappa <- runif(1, 0, 20)
-  }
-
-
-  # 3/24/20 keeping this out for now as it doesn't seem necessary...
-
-  #  if(!any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
-  #    optim.out$conv<-6		# so, 6 means that it hit the lower boundary
-  #  }
-  #  if(any(unlist(optim.out$par)==0) & !any(unlist(optim.out$par)==low)){
-  #    optim.out$conv<-7		# so, 7 means that it hit the upper boundary
-  #  }
-  #  if(any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
-  #    optim.out$conv<-8		# so, 8 means that it hit both boundaries
-  #  }
-
-
-  return.val<-list(par.est=exp(unlist(optim.out[1:par.num])),ls=unlist(optim.out$value),conv=unlist(optim.out$convcode),count=count)
-  return(return.val)
 }
 
 
