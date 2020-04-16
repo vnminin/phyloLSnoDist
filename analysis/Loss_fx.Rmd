@@ -1,0 +1,52 @@
+---
+title: "Loss function demonstration"
+author: "Peter Chi"
+date: "April 16, 2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(phyloLSnoDist)
+library(here)
+load(here("analysis","Loss_fx.RData"))
+```
+
+The following is the output without adjusting `rel.tol`:
+
+```{r}
+optim.out
+```
+
+The value of 1 under `convcode` is what indicates that convergence was not attained. 
+
+\vspace{10mm}
+Originally, what would happen now is that the optimization would be re-run with new, random start values. Like the following:
+
+```{r}
+optim.out.r
+```
+
+In this particular case, `p5` hit the max of 2. The loss function (under `value`) here is lower than that of the first run, and `convcode` is equal to 1. But in other scenarios that I investigated, neither of these were necessarily true. 
+
+\vspace{10mm}
+
+Regardless, after adjusting `rel.tol=1e-4`, we obtain:
+
+```{r}
+optim.out.1e4
+```
+
+All of the values are the as that of the original run. The only difference is that now `convcode=0` so it is happy to stay here.
+
+\newpage
+
+Now, plugging the MLE values into the loss function gives:
+```{r}
+new.ls.loss(log(ml.tree$edge.length[c(7,8,5,6,9,3,1,2,4)]), nodist.tree, 
+            read.phylosim.nuc(as.character(my.align)))
+```
+
+So, about twice the size of what we get through optimization, but still very small. 
+
+
