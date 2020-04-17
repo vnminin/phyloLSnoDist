@@ -4,7 +4,7 @@
 \alias{new.ls.loss}
 \title{L2 loss function}
 \usage{
-new.ls.loss(log.branch.length, my.topology, seq.table)
+new.ls.loss(log.branch.length, my.topology, seq.table, ts = FALSE)
 }
 \arguments{
 \item{log.branch.length}{natural log of the branch lengths of the phylogeny}

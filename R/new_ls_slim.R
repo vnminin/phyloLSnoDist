@@ -91,7 +91,7 @@ regular.ls.fit = function(init.brlen, my.topology, seq.dist){
 
 
 # 4/6/20 timecheck this and see if we can speed it up
-new.ls.loss = function(log.branch.length, my.topology, seq.table){
+new.ls.loss = function(log.branch.length, my.topology, seq.table, ts=FALSE){
 
   ## first bring branch length to the absolute scale
   branch.length = exp(log.branch.length)
@@ -105,8 +105,15 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table){
 
   phylo.dist = cophenetic.phylo(my.phylo)
 
+  # 4/17/20 I'm not 100% sure that this is the correct way to do this
+  if(ts){
+    ## define transitions regist.matrix
+    regist.matrix = matrix(c(0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0), 4,4,byrow=TRUE)
+  } else{
+    regist.matrix = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
+  }
+
   ## define JC69 model with its eigen decomposition
-  regist.matrix = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
   jc.69 <- as.eigen(jc.mc(4/3,c(0.25,0.25,0.25,0.25)))
 
   for (i in 2:num.taxa){
@@ -584,7 +591,6 @@ new.loss.K80 = function(log.params, my.topology, seq.table){
 #' @export
 #' @examples
 #' new.loss.K80(log.br.len, kappa, my.topology, seq.table)
-
 new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa = NULL, method="nlminb", low=-100, high=NULL, high.k = 100, rel.tol=1e-4, starttests=TRUE, kkt=TRUE){
   if(class(seq.table)!="phyDat"){
     cat('Error: alignment must be of class phyDat')
@@ -657,18 +663,17 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
 
 #' K80 eigen decomposition
 #'
-#' This function defines the K80 model via its eigen decomposition.
+#' This function defines the K80 model via its eigen decomposition. I'm not sure why it won't show up.
 #'
 #' @param hky.rates transition and transversion rates
 #' @param mc.stat stationary distribution
 #' @param scale if TRUE then scale the transition matrix. Defaults to FALSE.
 #'
 #' @keywords phylogeny, OLS
-#' @export
+#' @export as.eigen.hky
 #' @examples
 #' as.eigen.hky(hky.rates, mc.stat, scale = F)
-
-as.eigen.hky = function(hky.rates, mc.stat, scale = F){
+as.eigen.hky <- function(hky.rates, mc.stat, scale = F){
 
   transition.rate = hky.rates[1]
   transversion.rate = hky.rates[2]
@@ -715,14 +720,7 @@ as.eigen.hky = function(hky.rates, mc.stat, scale = F){
 
 
 
-# This is a problem...
-#Error: $ operator is invalid for atomic vectors
-#In addition: Warning messages:
-# 1: In if (bestQ > Q) { :
-#    the condition has length > 1 and only the first element will be used
-# 2: In if (bestQ > Q) { :
-#    the condition has length > 1 and only the first element will be used
-# 3: In phy$tip.label <- attr(x, "TipLabel") : Coercing LHS to a list
+
 
 
 

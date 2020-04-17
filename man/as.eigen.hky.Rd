@@ -14,7 +14,7 @@
 \item{scale}{if TRUE then scale the transition matrix. Defaults to FALSE.}
 }
 \description{
-This function defines the K80 model via its eigen decomposition.
+This function defines the K80 model via its eigen decomposition. I'm not sure why it won't show up.
 }
 \examples{
 as.eigen.hky(hky.rates, mc.stat, scale = F)

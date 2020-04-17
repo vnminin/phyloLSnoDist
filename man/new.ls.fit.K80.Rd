@@ -11,10 +11,11 @@ new.ls.fit.K80(
   init.kappa = NULL,
   method = "nlminb",
   low = -100,
-  high = 2,
+  high = NULL,
   high.k = 100,
-  starttests = FALSE,
-  kkt = FALSE
+  rel.tol = 1e-04,
+  starttests = TRUE,
+  kkt = TRUE
 )
 }
 \arguments{
