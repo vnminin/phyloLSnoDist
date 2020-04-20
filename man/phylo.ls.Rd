@@ -16,9 +16,9 @@ phylo.ls(
 \item{alignment}{a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
 function from \code{phangorn} package to transform data if necessary.}
 
-\item{set.neg.to.zero}{if TRUE, negative branch lengths will be converted to 0}
+\item{set.neg.to.zero}{if \code{TRUE}, negative branch lengths will be converted to 0}
 
-\item{search.all}{if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.}
+\item{search.all}{if \code{TRUE}, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.}
 
 \item{model}{substitution model for which to calculate the distance matrix}
 

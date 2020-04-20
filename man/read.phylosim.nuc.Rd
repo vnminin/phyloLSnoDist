@@ -12,7 +12,7 @@ function from \code{phangorn} package to transform data if necessary.}
 
 \item{initvals}{starting values for each branch}
 
-\item{search.all}{if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.}
+\item{search.all}{if \code{TRUE}, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.}
 
 \item{tol}{in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.}
 }

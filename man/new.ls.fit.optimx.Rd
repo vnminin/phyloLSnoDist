@@ -31,9 +31,9 @@ function from \code{phangorn} package to transform data if necessary.}
 
 \item{high}{constraint on optimization. Defaults to 2 which will constrain br len to be max of e^2 ~ 7.389}
 
-\item{starttests}{control parameter for optimx, default to FALSE for speed}
+\item{starttests}{control parameter for optimx, default to \code{FALSE} for speed}
 
-\item{kkt}{control parameter for optimx, default to FALSE for speed}
+\item{kkt}{control parameter for optimx, default to \code{FALSE} for speed}
 
 \item{initvals}{starting values for each branch}
 }

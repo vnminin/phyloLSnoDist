@@ -140,8 +140,8 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, ts=FALSE){
 #' @param method option for optimx function to choose which optimization method to use
 #' @param low contraint on optimization. Defaults to -100 which will constrain br len to be min of 3.72e-44
 #' @param high constraint on optimization. Defaults to 2 which will constrain br len to be max of e^2 ~ 7.389
-#' @param starttests control parameter for optimx, default to FALSE for speed
-#' @param kkt control parameter for optimx, default to FALSE for speed
+#' @param starttests control parameter for optimx, default to \code{FALSE} for speed
+#' @param kkt control parameter for optimx, default to \code{FALSE} for speed
 #'
 #' @return An unrooted phylogeny
 #'
@@ -227,7 +227,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
 #' @param alignment a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
 #' function from \code{phangorn} package to transform data if necessary.
 #' @param initvals starting values for each branch
-#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param search.all if \code{TRUE}, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
 #' @param tol in NNI search, keep searching if improvement is at least this amount. Used 1e-8 as default value consistent with phangorn.
 #' @return An unrooted phylogeny
 #'
@@ -268,8 +268,8 @@ read.phylosim.nuc<-function(alignment){
 #' @param alignment a nucleotide sequence alignment, of class \code{phyDat}. Use \code{phyDat}
 #' function from \code{phangorn} package to transform data if necessary.
 #' @param initvals starting values for each branch
-#' @param set.neg.to.zero if TRUE, negative branch lengths will be converted to 0
-#' @param search.all if TRUE, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
+#' @param set.neg.to.zero if \code{TRUE}, negative branch lengths will be converted to 0
+#' @param search.all if \code{TRUE}, an exhaustive search across all topologies will be performed. Otherwise, an NNI search will be performed.
 #' @param model substitution model for which to calculate the distance matrix
 #' @param tol in NNI search, keep searching if improvement is at least this amount
 #'

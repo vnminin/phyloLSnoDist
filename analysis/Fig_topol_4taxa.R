@@ -13,6 +13,7 @@ correct.tp.ml<-rep(0,n.scen)
 
 my.tree<-unroot(read.tree(here("analysis", "tree_files", "sim_phylo4-6.tree")))
 
+
 for(s in 1:length(n.sites)){
   for(i in 1:reps){
     my.align <- simSeq(x = my.tree, l = n.sites[s])
