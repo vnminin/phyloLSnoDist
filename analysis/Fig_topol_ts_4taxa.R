@@ -22,18 +22,18 @@ for(s in 1:length(n.sites)){
 
     my.align <- phyDat(cbind(as.character(my.align1), as.character(my.align2))[,sample(n.sites[s])])
 
-    ols.tree <- phylo.ls(my.align, search.all=TRUE) # add ts stuff here (4/20/20 not done at all yet)
+    ols.tree <- phylo.ls(my.align, search.all=TRUE, model="TS") # add ts stuff here (4/20/20 not done at all yet)
     nodist.tree <- phylo.ls.nodist(my.align, search.all=TRUE, ts=TRUE)
 
-    correct.tp.ls[s] <- ifelse(all.equal(my.tree, ols.tree, use.edge.length = F), correct.tp.ls[s]+1, correct.tp.ls[s])
-    correct.tp.nodist[s] <- ifelse(all.equal(my.tree, nodist.tree, use.edge.length = F), correct.tp.nodist[s]+1, correct.tp.nodist[s])
+    correct.tp.ls[s] <- ifelse(all.equal(my.tree1, ols.tree, use.edge.length = F), correct.tp.ls[s]+1, correct.tp.ls[s])
+    correct.tp.nodist[s] <- ifelse(all.equal(my.tree1, nodist.tree, use.edge.length = F), correct.tp.nodist[s]+1, correct.tp.nodist[s])
 
     print(i)
 
   }
 }
 
-save.image(here("analysis", "Fig_topol_4taxa.RData"))
+save.image(here("analysis", "Fig_topol_ts_4taxa.RData"))
 
 
 # 42 sec elapsed
