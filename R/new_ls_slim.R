@@ -83,6 +83,7 @@ regular.ls.fit = function(init.brlen, my.topology, seq.dist){
 #' @param log.branch.length natural log of the branch lengths of the phylogeny
 #' @param my.topology a phylogeny in ape format
 #' @param seq.table A numeric matrix of values 1-4 for each nucleotide type. Use function \code{read.phylosim.nuc} to transform character matrix to numeric if needed.
+#' @param ts option to use tranversions only distance
 #'
 #' @keywords phylogeny, OLS
 #' @export
@@ -138,6 +139,7 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, ts=FALSE){
 #' @param initvals starting values for each branch
 #' @param init.brlen initial branch lengths to use in the optimization routine
 #' @param method option for optimx function to choose which optimization method to use
+#' @param ts option to use transversion distance only
 #' @param low contraint on optimization. Defaults to -100 which will constrain br len to be min of 3.72e-44
 #' @param high constraint on optimization. Defaults to 2 which will constrain br len to be max of e^2 ~ 7.389
 #' @param starttests control parameter for optimx, default to \code{FALSE} for speed
@@ -152,7 +154,7 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, ts=FALSE){
 
 
 # order of arguments changed 4/1/20, might have implications on old code...
-new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="nlminb", low=-100, high=NULL, max.attempts=5, starttests=TRUE, kkt=TRUE, rel.tol=1e-4){
+new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="nlminb", ts = FALSE, low=-100, high=NULL, max.attempts=5, starttests=TRUE, kkt=TRUE, rel.tol=1e-4){
 
   if(class(seq.table)!="phyDat"){
     cat('Error: alignment must be of class phyDat')
@@ -183,6 +185,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
       optim.out <- optimx(
         log(init.brlen),
         new.ls.loss,
+        ts = ts,
         lower = rep(low,par.num),
         upper = rep(high,par.num),
         method = method,
@@ -355,7 +358,7 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
 #'
 
 # 4/9/20 not sure if bound_rm is a good idea. try the JC69 constraint idea and see if that does it.
-phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, method="nlminb", low=-100, high=NULL, tol = 1e-10, bound_rm = TRUE){
+phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, method="nlminb", ts=FALSE, low=-100, high=NULL, rel.tol = 1e-4, bound_rm = TRUE){
 #  seq.table <- as.character(alignment)   # keep it as phyDat
 
   if(class(alignment) != "phyDat"){
@@ -374,7 +377,7 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
 
       # for loop is same speed as using lapply. Not sure if I can speed this up at all.
       for (i in 1:length(all.trees)) {
-        output <- new.ls.fit.optimx(all.trees[[i]], alignment, initvals, method, low, high) # 3/30/20 check this
+        output <- new.ls.fit.optimx(all.trees[[i]], alignment, initvals, method, ts, low, high, rel.tol) # 3/30/20 check this
         all.trees[[i]]$edge.length <- output$par.est
         all.trees[[i]]$ls <- output$ls
 
@@ -405,7 +408,7 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
       D <- as.matrix(dist.dna(data.bin,model="JC69"))
       best.tree <- nj(D)
 
-      output <- new.ls.fit.optimx(my.topology = best.tree, seq.table = alignment)
+      output <- new.ls.fit.optimx(my.topology = best.tree, seq.table = alignment, initvals, method, ts, low, high, rel.tol)
       best.tree$edge.length <- output$par.est
       best.tree$ls <- output$ls
 

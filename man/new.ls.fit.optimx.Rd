@@ -9,6 +9,7 @@ new.ls.fit.optimx(
   seq.table,
   init.brlen = NULL,
   method = "nlminb",
+  ts = FALSE,
   low = -100,
   high = NULL,
   max.attempts = 5,
@@ -26,6 +27,8 @@ function from \code{phangorn} package to transform data if necessary.}
 \item{init.brlen}{initial branch lengths to use in the optimization routine}
 
 \item{method}{option for optimx function to choose which optimization method to use}
+
+\item{ts}{option to use transversion distance only}
 
 \item{low}{contraint on optimization. Defaults to -100 which will constrain br len to be min of 3.72e-44}
 

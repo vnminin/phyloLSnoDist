@@ -12,6 +12,8 @@ new.ls.loss(log.branch.length, my.topology, seq.table, ts = FALSE)
 \item{my.topology}{a phylogeny in ape format}
 
 \item{seq.table}{A numeric matrix of values 1-4 for each nucleotide type. Use function \code{read.phylosim.nuc} to transform character matrix to numeric if needed.}
+
+\item{ts}{option to use tranversions only distance}
 }
 \description{
 This function calculates the L2 loss as described in...
