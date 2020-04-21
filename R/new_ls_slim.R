@@ -303,6 +303,9 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
       allQ[i] <- attr(all.trees[[i]], "Q-score")
     }
     best <- which(allQ == min(allQ))
+    if(length(best)>1){
+      best <- sample(best, 1)  # if multiple, pick one at random
+    }
     best.tree <- all.trees[[best]]
 
   } else {
@@ -318,6 +321,9 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
       nni.trees <- lapply(nni(best.tree), ls.tree, D=D)
       nniQ <- sapply(nni.trees, function(x) attr(x, "Q-score"))
       best <- which(nniQ == min(nniQ))
+      if(length(best)>1){
+        best <- sample(best, 1)  # if multiple, pick one at random
+      }
       bestQ <- nniQ[best]
 
       if(bestQ > Q){
