@@ -12,7 +12,8 @@ correct.tp.nodist<-rep(0,n.scen)
 
 my.tree1<-unroot(read.tree(here("analysis", "tree_files", "sim_phylo4-6.tree")))
 my.tree2<-my.tree1
-my.tree2$tip.label <- my.tree2$tip.label[c(1,3,2,4)]
+my.tree2$tip.label <- my.tree2$tip.label[c(1,2,4,3)]
+
 
 
 for(s in 1:length(n.sites)){
