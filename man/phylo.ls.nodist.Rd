@@ -9,9 +9,10 @@ phylo.ls.nodist(
   initvals = NULL,
   search.all = FALSE,
   method = "nlminb",
+  ts = FALSE,
   low = -100,
   high = NULL,
-  tol = 1e-10,
+  rel.tol = 1e-04,
   bound_rm = TRUE
 )
 }

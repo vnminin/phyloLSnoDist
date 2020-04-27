@@ -538,8 +538,7 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
 #'
 #' This function calculates the distance free loss function under the Kimura 2 parameter model (K80).
 #'
-#' @param log.br.len natural log of the branch lengths
-#' @param log.kappa natural log of the transition/transversion ratio
+#' @param log.params natural log of the branch lengths and transition/transversion ratio
 #' @param my.topology the tree on which to calculate the loss function
 #' @param seq.table a nucleotide sequence alignment
 #'
@@ -729,7 +728,56 @@ as.eigen.hky <- function(hky.rates, mc.stat, scale = F){
 
 
 
+#' Loss function for gamma-distributed rate heterogeneity
+#'
+#' This function calculates the loss function value for a JC69+G model
+#'
+#' @param log.params natural log of the branch lengths and transition/transversion ratio
+#' @param my.topology the tree on which to calculate the loss function
+#' @param seq.table a nucleotide sequence alignment
+#'
+#' @keywords phylogeny, OLS
+#' @examples
+#' gamma.ls.loss(log.par, my.topology, seq.table)
+gamma.ls.loss = function(log.par, my.topology, seq.table){
 
+  ## first bring branch lengths and gamma rate parameter to the absolute scale
+  br.num = length(log.par)-1
+  branch.length = exp(log.par[1:br.num])
+  gamma.rate = exp(log.par[br.num+1])
+
+  num.taxa = dim(seq.table)[1]
+
+  my.ls = 0
+
+  my.phylo = my.topology
+  my.phylo$edge.length = branch.length
+
+  phylo.dist = cophenetic.phylo(my.phylo)
+
+  ## set up gamma rates
+  my.rates = qgamma(c(0.25/2,(0.5+0.25)/2,(0.5+0.75)/2, (0.75+1)/2),shape=gamma.rate, rate=gamma.rate)
+  my.rates = my.rates/sum(my.rates*0.25)
+
+  for (i in 2:num.taxa){
+    for (j in 1:(i-1)){
+      tree.dist = 0
+      robust.dist = 0
+
+      for (k in 1:4){
+        ## define JC69 model with its eigen decomposition
+        my.jc = as.eigen.hky(c(1,1), rep(0.25,4), scale=T)
+        my.jc = rescale.mc(my.jc, my.rates[k]*phylo.dist[my.phylo$tip.label[i],my.phylo$tip.label[j]])
+
+        tree.dist = tree.dist + my.rates[k]*phylo.dist[my.phylo$tip.label[i],my.phylo$tip.label[j]]/4
+        robust.dist = robust.dist + pair.robust.dist(my.jc, regist.matrix, seq.table[c(my.phylo$tip.label[i],my.phylo$tip.label[j]),])/4
+      }
+      my.ls = my.ls + (tree.dist - robust.dist)^2
+    }
+  }
+
+  return(my.ls)
+}
 
 
 

@@ -7,13 +7,11 @@
 new.loss.K80(log.params, my.topology, seq.table)
 }
 \arguments{
+\item{log.params}{natural log of the branch lengths and transition/transversion ratio}
+
 \item{my.topology}{the tree on which to calculate the loss function}
 
 \item{seq.table}{a nucleotide sequence alignment}
-
-\item{log.br.len}{natural log of the branch lengths}
-
-\item{log.kappa}{natural log of the transition/transversion ratio}
 }
 \description{
 This function calculates the distance free loss function under the Kimura 2 parameter model (K80).
