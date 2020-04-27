@@ -755,6 +755,8 @@ gamma.ls.loss = function(log.par, my.topology, seq.table){
 
   phylo.dist = cophenetic.phylo(my.phylo)
 
+  regist.matrix = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
+
   ## set up gamma rates
   my.rates = qgamma(c(0.25/2,(0.5+0.25)/2,(0.5+0.75)/2, (0.75+1)/2),shape=gamma.rate, rate=gamma.rate)
   my.rates = my.rates/sum(my.rates*0.25)
