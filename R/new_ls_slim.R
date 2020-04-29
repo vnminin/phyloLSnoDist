@@ -827,7 +827,7 @@ new.ls.fit.G <- function(my.topology, seq.table, init.brlen = NULL, init.alpha =
     while((optim.out$convcode != 0) & count<10){
 
       optim.out <- optimx(
-        log(c(init.brlen, init.kappa)),
+        log(c(init.brlen, init.alpha)),
         gamma.ls.loss,
         lower = rep(low,par.num),
         upper = c(rep(high,n.br),high.a),
