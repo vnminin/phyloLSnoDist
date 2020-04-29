@@ -612,7 +612,7 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
 
 
     if(is.null(init.brlen)){
-      init.brlen <- rep(0.1, n.br)
+      init.brlen <- rep(0.1, n.br) # 4/29/20 deal with this later, but I think this is jacked. n.br needs to be defined earlier in this function.
     }
 
     if(is.null(init.kappa)){
@@ -808,6 +808,7 @@ new.ls.fit.G <- function(my.topology, seq.table, init.brlen = NULL, init.alpha =
     }
 
 
+    n.br <- (length(tree)*2) - 3
     if(is.null(init.brlen)){
       init.brlen <- rep(0.1, n.br)
     }
