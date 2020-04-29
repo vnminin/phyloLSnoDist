@@ -732,7 +732,7 @@ as.eigen.hky <- function(hky.rates, mc.stat, scale = F){
 #'
 #' This function calculates the loss function value for a JC69+G model
 #'
-#' @param log.params natural log of the branch lengths and transition/transversion ratio
+#' @param log.par natural log of the branch lengths and transition/transversion ratio
 #' @param my.topology the tree on which to calculate the loss function
 #' @param seq.table a nucleotide sequence alignment
 #'
@@ -779,6 +779,89 @@ gamma.ls.loss = function(log.par, my.topology, seq.table){
   }
 
   return(my.ls)
+}
+
+
+#' Least Squares +G without distances
+#'
+#' This function calculates the distance free loss function under the +G model.
+#'
+#' @param log.br.len natural log of the branch lengths
+#' @param log.alpha natural log of the transition/transversion ratio
+#' @param my.topology the tree on which to calculate the loss function
+#' @param seq.table a nucleotide sequence alignment
+#'
+#' @keywords phylogeny, OLS
+#' @export
+#' @examples
+#' new.loss.K80(log.br.len, kappa, my.topology, seq.table)
+new.ls.fit.G <- function(my.topology, seq.table, init.brlen = NULL, init.alpha = NULL, method="nlminb", low=-100, high=NULL, high.a = 20, rel.tol=1e-4, starttests=TRUE, kkt=TRUE){
+  if(class(seq.table)!="phyDat"){
+    cat('Error: alignment must be of class phyDat')
+  } else{
+
+    # If not otherwise specified, use max of pairwise distances as the upper limit
+    if(is.null(high)){
+      pair.dists <- dist.dna(as.DNAbin(seq.table))
+      high <- log(max(pair.dists, na.rm=TRUE))
+    }
+
+
+    if(is.null(init.brlen)){
+      init.brlen <- rep(0.1, n.br)
+    }
+
+    if(is.null(init.alpha)){
+      init.alpha <- 1
+    }
+
+    seq.table <- read.phylosim.nuc(as.character(seq.table))
+    n.br <- dim(seq.table)[1]*2 - 3
+    par.num = n.br + 1
+    return.val = NULL
+    optim.out<-list(par=1,convcode=1)
+    count<-0
+
+    # try up to 10 times to reach convergence
+    while((optim.out$convcode != 0) & count<10){
+
+      optim.out <- optimx(
+        log(c(init.brlen, init.kappa)),
+        gamma.ls.loss,
+        lower = rep(low,par.num),
+        upper = c(rep(high,n.br),high.a),
+        method = method,
+        my.topology = my.topology,
+        seq.table = seq.table,
+        control=list(starttests=starttests, kkt=kkt, rel.tol=rel.tol)
+      )
+
+      # Keep track of iterations
+      count<-count+1
+
+      # If convergence was not reached, re-initialize starting values to random values
+      init.brlen <- runif(n.br,0,0.5)
+      init.alpha <- runif(1, 0, 20)
+    }
+
+
+    # 3/24/20 keeping this out for now as it doesn't seem necessary...
+
+    #  if(!any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
+    #    optim.out$conv<-6		# so, 6 means that it hit the lower boundary
+    #  }
+    #  if(any(unlist(optim.out$par)==0) & !any(unlist(optim.out$par)==low)){
+    #    optim.out$conv<-7		# so, 7 means that it hit the upper boundary
+    #  }
+    #  if(any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
+    #    optim.out$conv<-8		# so, 8 means that it hit both boundaries
+    #  }
+
+
+    return.val<-list(par.est=exp(unlist(optim.out[1:par.num])),ls=unlist(optim.out$value),conv=unlist(optim.out$convcode),count=count)
+    return(return.val)
+  }
+
 }
 
 

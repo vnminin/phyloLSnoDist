@@ -7,11 +7,11 @@
 \method{gamma}{ls.loss}(log.par, my.topology, seq.table)
 }
 \arguments{
+\item{log.par}{natural log of the branch lengths and transition/transversion ratio}
+
 \item{my.topology}{the tree on which to calculate the loss function}
 
 \item{seq.table}{a nucleotide sequence alignment}
-
-\item{log.params}{natural log of the branch lengths and transition/transversion ratio}
 }
 \description{
 This function calculates the loss function value for a JC69+G model
