@@ -737,6 +737,7 @@ as.eigen.hky <- function(hky.rates, mc.stat, scale = F){
 #' @param seq.table a nucleotide sequence alignment
 #'
 #' @keywords phylogeny, OLS
+#' @export gamma.ls.loss
 #' @examples
 #' gamma.ls.loss(log.par, my.topology, seq.table)
 gamma.ls.loss = function(log.par, my.topology, seq.table){
