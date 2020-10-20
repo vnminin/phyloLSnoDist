@@ -552,7 +552,7 @@ new.loss.K80 = function(log.params, my.topology, seq.table){
   ## first bring branch length to the absolute scale
   n.br<-length(log.params) - 1
   branch.length = exp(log.params[1:n.br])
-  ts.tv.ratio <- exp(log.params[n.br+1])
+  ts.tv.ratio <- log.params[n.br+1]   # 10/20/20 changed so kappa not logged (see new.ls.fit.K80 below)
 
   ts.matrix = matrix(c(0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0), 4,4,byrow=TRUE)
   tv.matrix = matrix(1,4,4) - ts.matrix - diag(rep(1,4))
@@ -630,7 +630,7 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
     while((optim.out$convcode != 0) & count<10){
 
       optim.out <- optimx(
-        log(c(init.brlen, init.kappa)),
+        c(log(init.brlen), init.kappa),    # 10/20/20 changed so kappa not logged
         new.loss.K80,
         lower = rep(low,par.num),
         upper = c(rep(high,n.br),high.k),
@@ -740,7 +740,7 @@ as.eigen.hky <- function(hky.rates, mc.stat, scale = F){
 #' @export gamma.ls.loss
 #' @examples
 #' gamma.ls.loss(log.par, my.topology, seq.table)
-gamma.ls.loss = function(log.par, my.topology, seq.table){
+gamma.ls.loss = function(log.par, my.topology, seq.table, k=4){
 
   ## first bring branch lengths and gamma rate parameter to the absolute scale
   br.num = length(log.par)-1
@@ -759,8 +759,10 @@ gamma.ls.loss = function(log.par, my.topology, seq.table){
   regist.matrix = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
 
   ## set up gamma rates
-  my.rates = qgamma(c(0.25/2,(0.5+0.25)/2,(0.5+0.75)/2, (0.75+1)/2),shape=gamma.rate, rate=gamma.rate)
-  my.rates = my.rates/sum(my.rates*0.25)
+#  my.rates = qgamma(c(0.25/2,(0.5+0.25)/2,(0.5+0.75)/2, (0.75+1)/2),shape=gamma.rate, rate=gamma.rate)
+#  my.rates = my.rates/sum(my.rates*0.25)
+
+  my.rates <- discrete.gamma(gamma.rate, k)
 
   for (i in 2:num.taxa){
     for (j in 1:(i-1)){
@@ -808,7 +810,7 @@ new.ls.fit.G <- function(my.topology, seq.table, init.brlen = NULL, init.alpha =
     }
 
 
-    n.br <- (length(tree)*2) - 3
+    n.br <- (length(my.topology$tip.label)*2) - 3
     if(is.null(init.brlen)){
       init.brlen <- rep(0.1, n.br)
     }
