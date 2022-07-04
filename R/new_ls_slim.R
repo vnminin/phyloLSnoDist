@@ -115,7 +115,7 @@ new.ls.loss = function(log.branch.length, my.topology, seq.table, ts=FALSE){
   }
 
   ## define JC69 model with its eigen decomposition
-  jc.69 <- as.eigen(jc.mc(4/3,c(0.25,0.25,0.25,0.25)))
+  jc.69 <- as.eigen.revmc(jc.mc(4/3,c(0.25,0.25,0.25,0.25))) ## 7/4/22 changed from as.eigen to as.eigen.revmc, no idea why this needed to happen but it seems necessary (works now)
 
   for (i in 2:num.taxa){
     for (j in 1:(i-1)){
@@ -378,7 +378,7 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
     }
 
     if(search.all){
-      all.trees <- allTrees(length(my.align),tip.label=names(alignment))
+      all.trees <- allTrees(length(alignment),tip.label=names(alignment)) # 7/1/22 check
       allQ <- vector()
 
       # for loop is same speed as using lapply. Not sure if I can speed this up at all.
@@ -552,7 +552,7 @@ new.loss.K80 = function(log.params, my.topology, seq.table){
   ## first bring branch length to the absolute scale
   n.br<-length(log.params) - 1
   branch.length = exp(log.params[1:n.br])
-  ts.tv.ratio <- log.params[n.br+1]   # 10/20/20 changed so kappa not logged (see new.ls.fit.K80 below)
+  ts.tv.ratio <- exp(log.params[n.br+1])
 
   ts.matrix = matrix(c(0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0), 4,4,byrow=TRUE)
   tv.matrix = matrix(1,4,4) - ts.matrix - diag(rep(1,4))
@@ -599,7 +599,7 @@ new.loss.K80 = function(log.params, my.topology, seq.table){
 #' @export
 #' @examples
 #' new.loss.K80(log.br.len, kappa, my.topology, seq.table)
-new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa = NULL, method="nlminb", low=-100, high=NULL, high.k = 100, rel.tol=1e-4, starttests=TRUE, kkt=TRUE){
+new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa = NULL, method="nlminb", low=-100, high=NULL, low.k=-2, high.k = 2, rel.tol=1e-4, starttests=TRUE, kkt=TRUE){
   if(class(seq.table)!="phyDat"){
     cat('Error: alignment must be of class phyDat')
   } else{
@@ -610,7 +610,8 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
       high <- log(max(pair.dists, na.rm=TRUE))
     }
 
-
+    n.taxa <- length(my.topology$tip.label)
+    n.br <- 2*n.taxa - 3  # take off one more to leave first branch fixed at 1
     if(is.null(init.brlen)){
       init.brlen <- rep(0.1, n.br) # 4/29/20 deal with this later, but I think this is jacked. n.br needs to be defined earlier in this function.
     }
@@ -626,13 +627,13 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
     optim.out<-list(par=1,convcode=1)
     count<-0
 
-    # try up to 10 times to reach convergence
-    while((optim.out$convcode != 0) & count<10){
+    # try up to 50 times to reach convergence
+    while((optim.out$convcode != 0) & count<50){
 
       optim.out <- optimx(
-        c(log(init.brlen), init.kappa),    # 10/20/20 changed so kappa not logged
+        log(c(init.brlen, init.kappa)),
         new.loss.K80,
-        lower = rep(low,par.num),
+        lower = c(rep(low,n.br), low.k),
         upper = c(rep(high,n.br),high.k),
         method = method,
         my.topology = my.topology,
@@ -644,8 +645,19 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
       count<-count+1
 
       # If convergence was not reached, re-initialize starting values to random values
-      init.brlen <- runif(n.br,0,0.5)
-      init.kappa <- runif(1, 0, 20)
+    #  init.brlen <- runif(n.br,exp(low),exp(high))
+      init.kappa <- runif(1, exp(low.k), exp(high.k))
+
+
+      if(unlist(optim.out[par.num]) == low.k){
+        optim.out$convcode <- 6 # so, 6 means that it hit the lower boundary
+      }
+
+      if(unlist(optim.out[par.num]) == high.k){
+        optim.out$convcode <- 7 # so, 6 means that it hit the lower boundary
+      }
+
+
     }
 
 
@@ -660,6 +672,8 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
     #  if(any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
     #    optim.out$conv<-8		# so, 8 means that it hit both boundaries
     #  }
+
+    # 6/9/22 add in check for kappa
 
 
     return.val<-list(par.est=exp(unlist(optim.out[1:par.num])),ls=unlist(optim.out$value),conv=unlist(optim.out$convcode),count=count)
@@ -740,7 +754,7 @@ as.eigen.hky <- function(hky.rates, mc.stat, scale = F){
 #' @export gamma.ls.loss
 #' @examples
 #' gamma.ls.loss(log.par, my.topology, seq.table)
-gamma.ls.loss = function(log.par, my.topology, seq.table, k=4){
+gamma.ls.loss = function(log.par, my.topology, seq.table){
 
   ## first bring branch lengths and gamma rate parameter to the absolute scale
   br.num = length(log.par)-1
@@ -759,10 +773,8 @@ gamma.ls.loss = function(log.par, my.topology, seq.table, k=4){
   regist.matrix = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
 
   ## set up gamma rates
-#  my.rates = qgamma(c(0.25/2,(0.5+0.25)/2,(0.5+0.75)/2, (0.75+1)/2),shape=gamma.rate, rate=gamma.rate)
-#  my.rates = my.rates/sum(my.rates*0.25)
-
-  my.rates <- discrete.gamma(gamma.rate, k)
+  my.rates = qgamma(c(0.25/2,(0.5+0.25)/2,(0.5+0.75)/2, (0.75+1)/2),shape=gamma.rate, rate=gamma.rate)
+  my.rates = my.rates/sum(my.rates*0.25)
 
   for (i in 2:num.taxa){
     for (j in 1:(i-1)){
@@ -810,7 +822,7 @@ new.ls.fit.G <- function(my.topology, seq.table, init.brlen = NULL, init.alpha =
     }
 
 
-    n.br <- (length(my.topology$tip.label)*2) - 3
+    n.br <- (length(tree)*2) - 3
     if(is.null(init.brlen)){
       init.brlen <- rep(0.1, n.br)
     }
@@ -867,6 +879,5 @@ new.ls.fit.G <- function(my.topology, seq.table, init.brlen = NULL, init.alpha =
   }
 
 }
-
 
 
