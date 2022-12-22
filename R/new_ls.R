@@ -160,15 +160,18 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
     cat('Error: alignment must be of class phyDat')
   } else{
 
-    # If not otherwise specified, use 0.1 as starting value for all branches
-    if(is.null(init.brlen)){
-      init.brlen <- rep(0.1, dim(my.topology$edge)[1])
-    }
-
     # If not otherwise specified, use max of pairwise distances as the upper limit
     if(is.null(high)){
       pair.dists <- dist.dna(as.DNAbin(seq.table))
+      pair.dists <- pair.dists[is.finite(pair.dists)]
       high <- log(max(pair.dists, na.rm=TRUE))
+      low <- log(min(pair.dists, na.rm=TRUE))
+    }
+
+    # If not otherwise specified, use half max as starting value for all branches
+    # 12/21/22: 0.1 works but want to generalize it. In progress...
+    if(is.null(init.brlen)){
+      init.brlen <- rep(exp(min), dim(my.topology$edge)[1])
     }
 
     seq.table <- read.phylosim.nuc(as.character(seq.table))
@@ -198,7 +201,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
       count<-count+1
 
       # If convergence was not reached, re-initialize starting values to random values
-      init.brlen<-runif(par.num,0,0.5)  # 4/10/20 changed from 0.5 to 0.1 because I suspect that smaller starting values will be better
+      init.brlen<-runif(par.num,0,(2*exp(min)))  # 7/5/22 changed from 0.1 to high - I think this was bad. Going to 2*min
     }
 
 
@@ -305,6 +308,7 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
     best <- which(allQ == min(allQ))
     if(length(best)>1){
       best <- sample(best, 1)  # if multiple, pick one at random
+      warning("multiple topologies had the same score; one of them chosen at random")
     }
     best.tree <- all.trees[[best]]
 
@@ -323,6 +327,7 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
       best <- which(nniQ == min(nniQ))
       if(length(best)>1){
         best <- sample(best, 1)  # if multiple, pick one at random
+        warning("multiple topologies had the same score during NNI search; one of them chosen at random")
       }
       bestQ <- nniQ[best]
 
@@ -364,7 +369,7 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
 #'
 
 # 4/9/20 not sure if bound_rm is a good idea. try the JC69 constraint idea and see if that does it.
-phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, method="nlminb", ts=FALSE, low=-100, high=NULL, rel.tol = 1e-4, bound_rm = TRUE){
+phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, method="nlminb", ts=FALSE, low=-100, high=NULL, rel.tol = 1e-4, bound_rm = TRUE, tol=1e-10){ # 8/10/22 added back in tol
 #  seq.table <- as.character(alignment)   # keep it as phyDat
 
   if(class(alignment) != "phyDat"){
@@ -374,7 +379,8 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
     # If not otherwise specified, use max of pairwise distances as the upper limit
     if(is.null(high)){
       pair.dists <- dist.dna(as.DNAbin(alignment))
-      high <- log(max(pair.dists))
+      pair.dists <- pair.dists[is.finite(pair.dists)]
+      high <- log(max(pair.dists, na.rm=TRUE))
     }
 
     if(search.all){
@@ -396,11 +402,17 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
 
       if(bound_rm){
         hit.bound <- apply(sapply(all.trees, `[[`, "edge.length")==exp(2), 2, sum) + apply(sapply(all.trees, `[[`, "edge.length")==exp(-100), 2, sum)
-        all.trees <- all.trees[hit.bound==0]
-        allQ <- allQ[hit.bound==0]
+        all.trees <- all.trees[hit.bound==0 & !is.na(hit.bound)]
+        allQ <- allQ[hit.bound==0 & !is.na(hit.bound)]
       }
 
       best<-which(allQ==min(allQ))
+
+      if(length(best)>1){
+        best <- sample(best, 1)  # if multiple, pick one at random
+        warning("multiple topologies had the same score; one of them chosen at random")
+      }
+
       best.tree <- all.trees[[best]]
       if(best.tree$convergence!=0){
         cat('Warning: convergence not reached on best tree.')
@@ -438,6 +450,13 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
           bestQ <- Q
         } else {
           best <- which(nniQ == min(nniQ))
+
+          if(length(best)>1){
+            best <- sample(best, 1)  # if multiple, pick one at random
+            warning("multiple topologies had the same score during NNI search; one of them chosen at random")
+          }
+
+
           bestQ <- nniQ[best]
           if(nni.output[[best]]$conv!=0){
             cat('Warning: convergence not reached on best tree.')
@@ -495,6 +514,10 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
     }
 
     best<-which(allQ==max(allQ))
+    if(length(best)>1){
+      best <- sample(best, 1)  # if multiple, pick one at random
+      warning("multiple topologies had the same score; one of them chosen at random")
+    }
     best.tree <- all.trees[[best]]
 
   } else {
@@ -518,6 +541,12 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
       nni.output <- lapply(nni.trees, pml, data = alignment)
       nniQ <- sapply(nni.output, `[[`, "logLik")
       best <- which(nniQ == max(nniQ))
+
+      if(length(best)>1){
+        best <- sample(best, 1)  # if multiple, pick one at random
+        warning("multiple topologies had the same score; one of them chosen at random")
+      }
+
       bestQ <- nniQ[best]
 
       if(bestQ < Q){
@@ -611,9 +640,9 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
     }
 
     n.taxa <- length(my.topology$tip.label)
-    n.br <- 2*n.taxa - 3  # take off one more to leave first branch fixed at 1
+    n.br <- 2*n.taxa - 3
     if(is.null(init.brlen)){
-      init.brlen <- rep(0.1, n.br) # 4/29/20 deal with this later, but I think this is jacked. n.br needs to be defined earlier in this function.
+      init.brlen <- rep(0.1, n.br) # 12/22/2022 change this to match other one?
     }
 
     if(is.null(init.kappa)){
@@ -621,7 +650,6 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
     }
 
     seq.table <- read.phylosim.nuc(as.character(seq.table))
-    n.br <- dim(seq.table)[1]*2 - 3
     par.num = n.br + 1
     return.val = NULL
     optim.out<-list(par=1,convcode=1)
@@ -659,21 +687,6 @@ new.ls.fit.K80 <- function(my.topology, seq.table, init.brlen = NULL, init.kappa
 
 
     }
-
-
-    # 3/24/20 keeping this out for now as it doesn't seem necessary...
-
-    #  if(!any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
-    #    optim.out$conv<-6		# so, 6 means that it hit the lower boundary
-    #  }
-    #  if(any(unlist(optim.out$par)==0) & !any(unlist(optim.out$par)==low)){
-    #    optim.out$conv<-7		# so, 7 means that it hit the upper boundary
-    #  }
-    #  if(any(unlist(optim.out$par)==0) & any(unlist(optim.out$par)==low)){
-    #    optim.out$conv<-8		# so, 8 means that it hit both boundaries
-    #  }
-
-    # 6/9/22 add in check for kappa
 
 
     return.val<-list(par.est=exp(unlist(optim.out[1:par.num])),ls=unlist(optim.out$value),conv=unlist(optim.out$convcode),count=count)
