@@ -314,7 +314,7 @@ phylo.ls <- function(alignment, set.neg.to.zero = TRUE, search.all = FALSE, mode
 
   } else {
     # Do nni search, starting from NJ tree
-    tree <- nj(D)
+    tree <- njs(D)
     best.tree <- ls.tree(tree = tree, D = D)
 
     Q <- Inf
@@ -424,7 +424,7 @@ phylo.ls.nodist <- function(alignment, initvals = NULL, search.all = FALSE, meth
       # Start from NJ tree using distance matrix according to JC69
       data.bin<-as.DNAbin(alignment)
       D <- as.matrix(dist.dna(data.bin,model="JC69"))
-      best.tree <- nj(D)
+      best.tree <- njs(D)
 
       output <- new.ls.fit.optimx(my.topology = best.tree, seq.table = alignment, initvals, method, ts, low, high, rel.tol)
       best.tree$edge.length <- output$par.est
@@ -526,7 +526,7 @@ phylo.ML <- function(alignment, search.all = FALSE, tol = 1e-8){
     # Start from NJ tree using distance matrix according to JC69
     data.bin<-as.DNAbin(alignment)
     D <- as.matrix(dist.dna(data.bin,model="JC69"))
-    best.tree <- nj(D)
+    best.tree <- njs(D)
 
     output <- optim.pml(pml(best.tree, alignment), control=pml.control(trace=0)) # this might be what messes things up...
     best.tree <- output$tree
