@@ -165,19 +165,22 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
       pair.dists <- dist.dna(as.DNAbin(seq.table))
       pair.dists <- pair.dists[is.finite(pair.dists)]
       high <- log(max(pair.dists, na.rm=TRUE))
-      low <- log(min(pair.dists, na.rm=TRUE))
+      # low <- log(min(pair.dists, na.rm=TRUE))
     }
+
+    par.num <- dim(my.topology$edge)[1]
 
     # If not otherwise specified, use half max as starting value for all branches
     # 12/21/22: 0.1 works but want to generalize it. In progress...
+    # 8/7/23 try max divided by n.br
     if(is.null(init.brlen)){
-      init.brlen <- rep(exp(min), dim(my.topology$edge)[1])
+      init.brlen <- rep(exp(high)/par.num, par.num)
     }
 
     seq.table <- read.phylosim.nuc(as.character(seq.table))
 
     return.val = NULL
-    par.num = length(init.brlen)
+    # par.num = length(init.brlen)
     #  regist.mat = matrix(1,4,4) - diag(rep(1,4))
     optim.out<-list(par=1,convcode=1)
     count<-0
@@ -201,7 +204,7 @@ new.ls.fit.optimx <- function(my.topology, seq.table, init.brlen=NULL, method="n
       count<-count+1
 
       # If convergence was not reached, re-initialize starting values to random values
-      init.brlen<-runif(par.num,0,(2*exp(min)))  # 7/5/22 changed from 0.1 to high - I think this was bad. Going to 2*min
+      init.brlen<-runif(par.num,0,(exp(high)/par.num) )  # 7/5/22 changed from 0.1 to high - I think this was bad. Going to 2*min
     }
 
 
