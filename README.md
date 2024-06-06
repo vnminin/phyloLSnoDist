@@ -52,3 +52,6 @@ plot(nodist_tree, type='u')
 
 ## Extended Vignette
 A longer vignette, showing the above code with its intended output, along with replication of select simulation experiments from the manuscript, is available at 
+
+## Other Notes
+The `analysis` directory of this repository contains scratchwork, older versions of code, and unpublished simulation experiments. All final code for the manuscript is in the `manuscript` directory. 
