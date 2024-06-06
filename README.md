@@ -1,2 +1,2 @@
-# phylo_ls_no_dist
-Phylogenetic least squares without distances paper
+# phyloLSnoDist
+This package performs phylogenetic inference under the least squares framework, but without the use of traditional evolutionary distances.
