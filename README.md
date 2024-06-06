@@ -30,7 +30,6 @@ First we must load the `phyloLSnoDist` package, which should also load its depen
 library(phyloLSnoDist)
 ```
 
-### 4-taxon tree
 Using the `rtree` function from the `ape` package, we generate a 4-taxon tree which we will use for demonstration:
 ```
 set.seed(100)
