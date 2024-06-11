@@ -51,7 +51,7 @@ plot(nodist_tree, type='u')
 
 
 ## Extended Vignette
-A longer vignette, showing the above code with its intended output, along with replication of select simulation experiments from the manuscript, is available at 
+A longer vignette, showing the above code with its intended output, along with replication of select simulation experiments from the manuscript, is available in the `vignette` directory. The output pdf is `vignette.pdf` along with associated R Markdown file, `vignette.Rmd`.
 
 ## Other Notes
 The `analysis` directory of this repository contains scratchwork, older versions of code, and unpublished simulation experiments. All final code for the manuscript is in the `manuscript` directory. 
