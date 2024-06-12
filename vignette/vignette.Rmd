@@ -29,7 +29,7 @@ Then, the easiest way to install `phyloLSnoDist` will be to use `install_github`
 ```{r, eval=FALSE}
 install.packages("devtools") # if not already installed
 library(devtools)
-install_github("peterbchi/phyloLSnoDist")
+install_github("vnminin/phyloLSnoDist")
 ```
 
 # Phylogenetic Inference: Simple Example
@@ -66,7 +66,7 @@ In the manuscript, this figure is shown:
 
 ![](Fig_errors_5taxa.pdf){width=85%}
 
-The full code to run the simulations to create this figure are in the file called `Fig_errors_5taxa.R` in the `analysis` directory of our github repository (`https://github.com/peterbchi/phyloLSnoDist`). We walk through an abbreviated version below. 
+The full code to run the simulations to create this figure are in the file called `Fig_errors_5taxa.R` in the `analysis` directory of our github repository (`https://github.com/vnminin/phyloLSnoDist`). We walk through an abbreviated version below. 
 
 ### Setup
 First, we load the appropriate 5-taxon tree file, contained in the `tree_files` subdirectory within the `analysis` directory in the github repository, or also in the `Vignette` directory. We also get things set up for simulations:
@@ -150,7 +150,7 @@ In the manuscript, Figure 4 is the following:
 
 ![](Fig_topol.pdf){width=85%}
 
-The code to run the simulations for this figure is included in the files called `Fig_topol_4taxa.R`, `Fig_topol_5taxa.R` and `Fig_topol_6taxa.R`, all in the `analysis` directory of our github repository (`https://github.com/peterbchi/phyloLSnoDist`). We walk through the 4-taxa simulations below.
+The code to run the simulations for this figure is included in the files called `Fig_topol_4taxa.R`, `Fig_topol_5taxa.R` and `Fig_topol_6taxa.R`, all in the `analysis` directory of our github repository (`https://github.com/vnminin/phyloLSnoDist`). We walk through the 4-taxa simulations below.
 
 
 First we set the number of reps and create some items for storage of the results:
