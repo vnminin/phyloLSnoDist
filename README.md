@@ -20,7 +20,7 @@ Then, the easiest way to install `phyloLSnoDist` will be to use `install_github`
 ```
 install.packages("devtools") # if not already installed
 library(devtools)
-install_github("peterbchi/phyloLSnoDist")
+install_github("vnminin/phyloLSnoDist")
 ```
 
 
