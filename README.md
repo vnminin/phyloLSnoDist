@@ -18,9 +18,8 @@ You may also need to include the option `INSTALL_opts = c('--no-lock').`
 Then, the easiest way to install `phyloLSnoDist` will be to use `install_github` from the `devtools` package:
 
 ```
-install.packages("devtools") # if not already installed
-library(devtools)
-install_github("vnminin/phyloLSnoDist")
+install.packages("remotes")
+remotes::install_github("vnminin/phyloLSnoDist")
 ```
 
 
