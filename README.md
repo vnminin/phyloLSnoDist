@@ -11,7 +11,7 @@ First, two packages need to be installed:
 Installation of `robustDist` can be accomplished with the following:
 ```
 install.packages("robustDist", repos=c("http://R-Forge.R-project.org",
-                                       "http://cran.at.r-project.org"),dependencies=TRUE))
+                                       "http://cran.at.r-project.org"),dependencies=TRUE)
 ```
 You may also need to include the option `INSTALL_opts = c('--no-lock').`
 
